@@ -3,308 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Binance Futures Trading</title>
+    <title>Binance Futures Trading Platform</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🚀 Binance Futures Trading</h1>
-            <p class="subtitle">Giao dịch Futures nhanh chóng với lệnh hẹn giờ</p>
+            <p class="subtitle">Nền tảng giao dịch Futures nhanh chóng và chính xác</p>
         </header>
 
         <div class="main-content">
-            <!-- Tab Navigation -->
+            <!-- Navigation Tabs -->
             <div class="tabs">
-                <button class="tab-btn active" data-tab="place-order">Đặt Lệnh</button>
-                <button class="tab-btn" data-tab="open-orders">Lệnh Đang Chạy</button>
-                <button class="tab-btn" data-tab="positions">Vị Thế</button>
-                <button class="tab-btn" data-tab="scheduled">Lệnh Đã Lên Lịch</button>
-                <button class="tab-btn" data-tab="history">Lịch Sử</button>
-                <button class="tab-btn" data-tab="position-history">Lịch Sử Vị Thế</button>
-                <button class="tab-btn" data-tab="funding">Funding</button>
-                <button class="tab-btn" data-tab="account">Tài Khoản</button>
+                <button class="tab-btn active" data-page="place-order">Đặt Lệnh</button>
+                <button class="tab-btn" data-page="open-orders">Lệnh Đang Chạy</button>
+                <button class="tab-btn" data-page="positions">Vị Thế</button>
+                <button class="tab-btn" data-page="scheduled">Lệnh Đã Lên Lịch</button>
+                <button class="tab-btn" data-page="history">Lịch Sử</button>
+                <button class="tab-btn" data-page="position-history">Lịch Sử Vị Thế</button>
+                <button class="tab-btn" data-page="funding">Funding</button>
+                <button class="tab-btn" data-page="market-data">Market Data</button>
+                <button class="tab-btn" data-page="liquidation">Liquidation</button>
+                <button class="tab-btn" data-page="account">Tài Khoản</button>
             </div>
 
-            <!-- Tab: Đặt Lệnh -->
-            <div class="tab-content active" id="place-order">
-                <div class="card">
-                    <h2>Đặt Lệnh Futures</h2>
-                    <form id="orderForm">
-                        <div class="form-group">
-                            <label for="symbol">Cặp giao dịch:</label>
-                            <div class="input-group">
-                                <select id="symbol" name="symbol" required>
-                                    <option value="">Đang tải...</option>
-                                </select>
-                                <button type="button" id="refreshSymbols" class="btn-secondary">🔄</button>
-                            </div>
-                            <div class="price-info" id="priceInfo"></div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="side">Loại lệnh:</label>
-                                <select id="side" name="side" required>
-                                    <option value="BUY">Mua (Long)</option>
-                                    <option value="SELL">Bán (Short)</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="type">Kiểu lệnh:</label>
-                                <select id="type" name="type" required>
-                                    <option value="MARKET">Market (Thị trường)</option>
-                                    <option value="LIMIT">Limit (Giới hạn)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="quantityType">Loại số lượng:</label>
-                            <select id="quantityType" name="quantityType">
-                                <option value="usdt">💰 Số tiền (USDT) - Khuyên dùng</option>
-                                <option value="contracts">📊 Số lượng hợp đồng (Contracts)</option>
-                            </select>
-                            <small>
-                                <strong>💰 Số tiền (USDT):</strong> Nhập số tiền bạn muốn sử dụng. Hệ thống tự tính số hợp đồng dựa trên giá và đòn bẩy.<br>
-                                <strong>📊 Số lượng hợp đồng:</strong> Nhập trực tiếp số hợp đồng muốn mua/bán. (1 hợp đồng = 1 đơn vị của coin)
-                            </small>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="quantity" id="quantityLabel">Số lượng hợp đồng:</label>
-                                <input type="number" id="quantity" name="quantity" step="0.001" min="0" required>
-                                <small id="quantityHelp">Nhập số lượng hợp đồng bạn muốn giao dịch</small>
-                            </div>
-
-                            <div class="form-group" id="priceGroup" style="display: none;">
-                                <label for="price">Giá (USDT):</label>
-                                <input type="number" id="price" name="price" step="0.01" min="0">
-                                <small>Giá đặt lệnh (chỉ áp dụng cho lệnh Limit)</small>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="leverage">Đòn bẩy (Leverage):</label>
-                                <input type="number" id="leverage" name="leverage" min="1" max="125" value="1" step="1">
-                                <small>Đòn bẩy từ 1x đến 125x. Ví dụ: 10x = giao dịch với đòn bẩy 10 lần</small>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="marginType">Loại margin:</label>
-                                <select id="marginType" name="marginType">
-                                    <option value="CROSSED">Cross Margin (Ký quỹ chéo)</option>
-                                    <option value="ISOLATED">Isolated Margin (Ký quỹ cô lập)</option>
-                                </select>
-                                <small>Cross: Dùng chung margin cho tất cả vị thế. Isolated: Margin riêng cho từng vị thế</small>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="reduceOnly" name="reduceOnly">
-                                Reduce Only (Chỉ giảm vị thế - không mở thêm)
-                            </label>
-                            <small>Chỉ cho phép giảm vị thế hiện có, không mở vị thế mới</small>
-                        </div>
-
-                        <div class="form-group" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                            <label>
-                                <input type="checkbox" id="closePosition" name="closePosition">
-                                <strong style="color: #e74c3c;">🔴 Đóng vị thế ngay (Close Position)</strong>
-                            </label>
-                            <small style="display: block; margin-top: 5px; color: #666;">Đóng toàn bộ vị thế đang mở của symbol này ngay lập tức. Hệ thống sẽ tự động tính số lượng và đặt lệnh MARKET với reduceOnly.</small>
-                        </div>
-
-                        <div class="form-group" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                            <label>
-                                <input type="checkbox" id="scheduleOrder" name="scheduleOrder">
-                                <strong>⏰ Đặt lệnh theo thời gian</strong>
-                            </label>
-                            <small style="display: block; margin-top: 5px; color: #666;">Đặt lệnh để thực thi vào thời điểm cụ thể trong tương lai</small>
-                        </div>
-
-                        <div class="form-group" id="scheduleGroup" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 15px;">
-                            <h3 style="margin-bottom: 15px; color: #667eea; font-size: 1.2em;">⏰ Cài đặt thời gian</h3>
-                            
-                            <div class="form-group">
-                                <label><strong>Thời gian thực thi lệnh (chính xác đến giây):</strong></label>
-                                <div class="time-input-group">
-                                    <div class="time-input-item">
-                                        <label for="scheduleDate">Ngày:</label>
-                                        <input type="date" id="scheduleDate" name="scheduleDate" required>
-                                    </div>
-                                    <div class="time-input-item">
-                                        <label for="scheduleHour">Giờ:</label>
-                                        <input type="number" id="scheduleHour" name="scheduleHour" min="0" max="23" value="13" required>
-                                    </div>
-                                    <div class="time-input-item">
-                                        <label for="scheduleMinute">Phút:</label>
-                                        <input type="number" id="scheduleMinute" name="scheduleMinute" min="0" max="59" value="55" required>
-                                    </div>
-                                    <div class="time-input-item">
-                                        <label for="scheduleSecond">Giây:</label>
-                                        <input type="number" id="scheduleSecond" name="scheduleSecond" min="0" max="59" value="59" required>
-                                    </div>
-                                </div>
-                                <small style="display: block; margin-top: 5px;">Ví dụ: 13:55:59 ngày hôm nay</small>
-                                <div id="countdown" style="margin-top: 10px; font-weight: bold; color: #667eea; font-size: 1.1em;"></div>
-                            </div>
-                            
-                            <div class="form-group" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                                <label>
-                                    <input type="checkbox" id="closePositionAfterFill" name="closePositionAfterFill">
-                                    <strong style="color: #e74c3c;">🔴 Tự động cắt vị thế sau khi lệnh khớp</strong>
-                                </label>
-                                <small style="display: block; margin-top: 5px; color: #666;">Sau khi lệnh khớp, hệ thống sẽ tự động đóng toàn bộ vị thế bằng lệnh MARKET với reduceOnly=true</small>
-                            </div>
-                            
-                            <div class="form-group" style="margin-top: 15px;">
-                                <label>
-                                    <input type="checkbox" id="closePositionAtTime" name="closePositionAtTime">
-                                    <strong style="color: #e74c3c;">🔴 Cắt vị thế theo thời gian</strong>
-                                </label>
-                                <small style="display: block; margin-top: 5px; color: #666;">Khi đến thời gian đã chọn, hệ thống sẽ tự động đóng toàn bộ vị thế bằng lệnh MARKET với reduceOnly=true</small>
-                            </div>
-                            
-                            <div class="form-group" id="closePositionTimeGroup" style="display: none; margin-top: 15px; background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107;">
-                                <label><strong>Thời gian cắt vị thế (chính xác đến giây):</strong></label>
-                                <div class="time-input-group">
-                                    <div class="time-input-item">
-                                        <label for="closePositionDate">Ngày:</label>
-                                        <input type="date" id="closePositionDate" name="closePositionDate">
-                                    </div>
-                                    <div class="time-input-item">
-                                        <label for="closePositionHour">Giờ:</label>
-                                        <input type="number" id="closePositionHour" name="closePositionHour" min="0" max="23" value="13">
-                                    </div>
-                                    <div class="time-input-item">
-                                        <label for="closePositionMinute">Phút:</label>
-                                        <input type="number" id="closePositionMinute" name="closePositionMinute" min="0" max="59" value="56">
-                                    </div>
-                                    <div class="time-input-item">
-                                        <label for="closePositionSecond">Giây:</label>
-                                        <input type="number" id="closePositionSecond" name="closePositionSecond" min="0" max="59" value="1">
-                                    </div>
-                                </div>
-                                <small style="display: block; margin-top: 5px;">Ví dụ: 13:56:01 - Hệ thống sẽ tự động cắt vị thế vào thời gian này</small>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn-primary" id="submitBtn">
-                            Đặt Lệnh
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Tab: Lệnh Đang Chạy -->
-            <div class="tab-content" id="open-orders">
-                <div class="card">
-                    <h2>Lệnh Đang Chạy (Open Orders)</h2>
-                    <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
-                        <strong>Lệnh đang chờ khớp:</strong> Các lệnh bạn đã đặt nhưng chưa được khớp, đang chờ giá đạt điều kiện.
-                    </p>
-                    <div id="openOrdersList" class="orders-list"></div>
-                </div>
-            </div>
-
-            <!-- Tab: Vị Thế -->
-            <div class="tab-content" id="positions">
-                <div class="card">
-                    <h2>Vị Thế Đang Mở (Positions)</h2>
-                    <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
-                        <strong>Vị thế:</strong> Số lượng coin bạn đang nắm giữ (đã khớp lệnh). Khác với "Lệnh đang chạy" - đó là lệnh chưa khớp.
-                    </p>
-                    <div id="positionsList" class="orders-list"></div>
-                </div>
-            </div>
-
-            <!-- Tab: Lệnh Đã Lên Lịch -->
-            <div class="tab-content" id="scheduled">
-                <div class="card">
-                    <h2>Lệnh Đã Lên Lịch</h2>
-                    <div id="scheduledOrdersList" class="orders-list"></div>
-                </div>
-            </div>
-
-            <!-- Tab: Lịch Sử -->
-            <div class="tab-content" id="history">
-                <div class="card">
-                    <h2>Lịch Sử Giao Dịch</h2>
-                    <div class="form-group">
-                        <label for="historySymbol">Lọc theo cặp:</label>
-                        <select id="historySymbol">
-                            <option value="">Tất cả</option>
-                        </select>
-                    </div>
-                    <div id="historyList" class="orders-list"></div>
-                </div>
-            </div>
-
-            <!-- Tab: Lịch Sử Vị Thế -->
-            <div class="tab-content" id="position-history">
-                <div class="card">
-                    <h2>Lịch Sử Vị Thế (Đã Đóng)</h2>
-                    <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
-                        <strong>Lịch sử các vị thế đã đóng:</strong> Hiển thị lời/lỗ (Realized PnL) của từng vị thế đã được đóng.
-                    </p>
-                    <div class="form-group">
-                        <label for="positionHistorySymbol">Lọc theo cặp:</label>
-                        <select id="positionHistorySymbol">
-                            <option value="">Tất cả</option>
-                        </select>
-                    </div>
-                    <div id="positionHistoryList" class="orders-list"></div>
-                </div>
-            </div>
-
-            <!-- Tab: Funding -->
-            <div class="tab-content" id="funding">
-                <div class="card">
-                    <h2>Lịch Sử Funding</h2>
-                    <div class="tabs" style="margin-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
-                        <button class="tab-btn" id="fundingIncomeTab" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; cursor: pointer; border-radius: 5px 5px 0 0;">Funding Income</button>
-                        <button class="tab-btn" id="fundingRateTab" style="flex: 1; padding: 10px; background: #f5f5f5; color: #666; border: none; cursor: pointer; border-radius: 5px 5px 0 0;">Funding Rate</button>
-                    </div>
-                    
-                    <div id="fundingIncomeContent">
-                        <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
-                            <strong>Funding Income:</strong> Lịch sử phí funding bạn đã nhận/trả cho từng kỳ funding.
-                        </p>
-                        <div class="form-group">
-                            <label for="fundingIncomeSymbol">Lọc theo cặp:</label>
-                            <select id="fundingIncomeSymbol">
-                                <option value="">Tất cả</option>
-                            </select>
-                        </div>
-                        <div id="fundingIncomeList" class="orders-list"></div>
-                    </div>
-                    
-                    <div id="fundingRateContent" style="display: none;">
-                        <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
-                            <strong>Funding Rate:</strong> Lịch sử funding rate của thị trường (không phải của tài khoản).
-                        </p>
-                        <div class="form-group">
-                            <label for="fundingRateSymbol">Lọc theo cặp:</label>
-                            <select id="fundingRateSymbol">
-                                <option value="">Tất cả</option>
-                            </select>
-                        </div>
-                        <div id="fundingRateList" class="orders-list"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab: Tài Khoản -->
-            <div class="tab-content" id="account">
-                <div class="card">
-                    <h2>Thông Tin Tài Khoản</h2>
-                    <div id="accountInfo"></div>
-                </div>
+            <!-- Content Area -->
+            <div id="content-area" class="tab-content active">
+                <!-- Content will be loaded dynamically here -->
             </div>
         </div>
 
@@ -313,6 +39,6 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="router.js"></script>
 </body>
 </html>
-

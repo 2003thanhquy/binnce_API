@@ -1,0 +1,25 @@
+<div class="card">
+    <h2>Lịch Sử Thanh Lý (Liquidation History)</h2>
+    <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+        <strong>Force Orders:</strong> Lịch sử các lệnh bị thanh lý (liquidation) hoặc ADL (Auto-Deleveraging).
+    </p>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+        <div class="form-group" style="flex: 1; min-width: 150px;">
+            <label for="liquidationSymbol">Lọc theo cặp:</label>
+            <select id="liquidationSymbol" data-symbol-dropdown>
+                <option value="">Tất cả</option>
+            </select>
+        </div>
+        <div class="form-group" style="flex: 1; min-width: 120px;">
+            <label for="liquidationLimit">Số lượng:</label>
+            <select id="liquidationLimit">
+                <option value="20">20</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+        <button class="btn-primary" id="loadLiquidationBtn" style="padding: 10px 20px;">Tải Dữ Liệu</button>
+    </div>
+    <div id="liquidationList" class="orders-list"></div>
+</div>
+

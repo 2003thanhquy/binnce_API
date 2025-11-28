@@ -1,0 +1,120 @@
+<div class="card">
+    <h2>Đặt Lệnh Futures</h2>
+    <form id="orderForm">
+        <div class="form-group">
+            <label for="symbol">Cặp giao dịch:</label>
+            <div class="input-group">
+                <select id="symbol" name="symbol" required data-symbol-dropdown>
+                    <option value="">Đang tải...</option>
+                </select>
+                <button type="button" id="refreshSymbols" class="btn-secondary">🔄</button>
+            </div>
+            <div class="price-info" id="priceInfo"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="side">Loại lệnh:</label>
+            <select id="side" name="side" required>
+                <option value="BUY">Mua (Long)</option>
+                <option value="SELL">Bán (Short)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="type">Kiểu lệnh:</label>
+            <select id="type" name="type" required>
+                <option value="MARKET">Market (Khớp ngay)</option>
+                <option value="LIMIT">Limit (Giá cố định)</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="priceField" style="display: none;">
+            <label for="price">Giá (USDT):</label>
+            <input type="number" id="price" name="price" step="0.00000001" placeholder="Nhập giá...">
+        </div>
+
+        <div class="form-group">
+            <label for="quantityType">Loại số lượng:</label>
+            <select id="quantityType" name="quantityType" required>
+                <option value="USDT">Số tiền (USDT)</option>
+                <option value="contracts">Số lượng hợp đồng</option>
+            </select>
+            <small id="quantityHelp">Nhập số tiền USDT bạn muốn sử dụng</small>
+        </div>
+
+        <div class="form-group">
+            <label for="quantity">Số lượng:</label>
+            <input type="number" id="quantity" name="quantity" step="0.00000001" required placeholder="Nhập số lượng...">
+        </div>
+
+        <div class="form-group">
+            <label for="leverage">Đòn bẩy:</label>
+            <input type="number" id="leverage" name="leverage" min="1" max="125" value="1" required>
+            <small>Đòn bẩy sẽ được áp dụng cho symbol này</small>
+        </div>
+
+        <div class="form-group">
+            <label for="marginType">Margin Type:</label>
+            <select id="marginType" name="marginType" required>
+                <option value="CROSSED">Cross (Chéo)</option>
+                <option value="ISOLATED">Isolated (Cô lập)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="scheduleOrder" name="scheduleOrder">
+                ⏰ Đặt lệnh theo thời gian
+            </label>
+        </div>
+
+        <div id="scheduleFields" style="display: none;">
+            <div class="form-group">
+                <label>Thời gian thực thi lệnh (chính xác đến giây):</label>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+                    <input type="date" id="scheduleDate" name="scheduleDate" required>
+                    <input type="number" id="scheduleHour" name="scheduleHour" min="0" max="23" placeholder="Giờ" required>
+                    <input type="number" id="scheduleMinute" name="scheduleMinute" min="0" max="59" placeholder="Phút" required>
+                    <input type="number" id="scheduleSecond" name="scheduleSecond" min="0" max="59" placeholder="Giây" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="closePositionAfterFill" name="closePositionAfterFill">
+                    🔴 Tự động cắt vị thế sau khi lệnh khớp
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="closePositionAtTime" name="closePositionAtTime">
+                    🔴 Cắt vị thế theo thời gian
+                </label>
+            </div>
+
+            <div id="closePositionTimeFields" style="display: none;">
+                <div class="form-group">
+                    <label>Thời gian cắt (đóng vị thế):</label>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+                        <input type="date" id="closePositionDate" name="closePositionDate">
+                        <input type="number" id="closePositionHour" name="closePositionHour" min="0" max="23" placeholder="Giờ">
+                        <input type="number" id="closePositionMinute" name="closePositionMinute" min="0" max="59" placeholder="Phút">
+                        <input type="number" id="closePositionSecond" name="closePositionSecond" min="0" max="59" placeholder="Giây">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="closePosition" name="closePosition">
+                <strong id="closePositionLabel">🔴 Đóng vị thế ngay (Close Position)</strong>
+            </label>
+            <small id="closePositionHelp" style="display: none; color: #dc3545; font-weight: bold;"></small>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-primary">Đặt Lệnh</button>
+    </form>
+</div>
+

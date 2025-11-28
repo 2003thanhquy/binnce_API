@@ -1,0 +1,33 @@
+<div class="card">
+    <h2>Market Data</h2>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+        <div class="form-group" style="flex: 1; min-width: 200px;">
+            <label for="marketDataSymbol">Chọn Symbol:</label>
+            <select id="marketDataSymbol" data-symbol-dropdown>
+                <option value="">Chọn symbol...</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: flex-end;">
+            <button class="btn-primary" id="loadMarketDataBtn" style="padding: 10px 20px;">Tải Dữ Liệu</button>
+        </div>
+    </div>
+    
+    <div class="tabs" style="margin-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
+        <button class="tab-btn" id="orderBookTab" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; cursor: pointer; border-radius: 5px 5px 0 0;">Order Book</button>
+        <button class="tab-btn" id="tradesTab" style="flex: 1; padding: 10px; background: #f5f5f5; color: #666; border: none; cursor: pointer; border-radius: 5px 5px 0 0;">Recent Trades</button>
+        <button class="tab-btn" id="ticker24hrTab" style="flex: 1; padding: 10px; background: #f5f5f5; color: #666; border: none; cursor: pointer; border-radius: 5px 5px 0 0;">24h Stats</button>
+    </div>
+    
+    <div id="orderBookContent">
+        <div id="orderBookList" class="orders-list"></div>
+    </div>
+    
+    <div id="tradesContent" style="display: none;">
+        <div id="tradesList" class="orders-list"></div>
+    </div>
+    
+    <div id="ticker24hrContent" style="display: none;">
+        <div id="ticker24hrInfo"></div>
+    </div>
+</div>
+

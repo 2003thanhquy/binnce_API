@@ -1,5 +1,5 @@
 // API Base URL
-const API_BASE = '';
+const API_BASE = window.location.origin;
 
 // State
 let symbols = [];
@@ -7,39 +7,35 @@ let selectedSymbol = '';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Load symbols for dropdowns
     loadSymbols();
-    setupEventListeners();
-    refreshScheduledOrders();
-    updateQuantityHelp(); // Initialize quantity help text
     
-    // Setup close position checkbox listener
-    const closePositionCheckbox = document.getElementById('closePosition');
-    if (closePositionCheckbox) {
-        closePositionCheckbox.addEventListener('change', handleClosePositionChange);
-    }
+    // Setup global event listeners (only for elements that exist in index.html)
+    setupEventListeners();
+    
+    // Note: Page-specific initialization is handled by router.js
+    // refreshScheduledOrders(), updateQuantityHelp(), etc. are called when pages load
 });
 
 // Event Listeners
 function setupEventListeners() {
-    // Tab switching
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabName = btn.dataset.tab;
-            switchTab(tabName);
-        });
-    });
-
-    // Order form
-    document.getElementById('orderForm').addEventListener('submit', handleOrderSubmit);
-    document.getElementById('type').addEventListener('change', togglePriceField);
-    document.getElementById('scheduleOrder').addEventListener('change', toggleScheduleField);
-    document.getElementById('symbol').addEventListener('change', handleSymbolChange);
-
-    // Refresh symbols button (keep this one as it's useful)
-    document.getElementById('refreshSymbols').addEventListener('click', loadSymbols);
+    // Tab switching - removed because router.js handles this now
+    // Note: Event listeners for page-specific elements are set up in router.js initializePage()
     
-    // Quantity type change
-    document.getElementById('quantityType').addEventListener('change', handleQuantityTypeChange);
+    // Only setup global listeners here that exist in index.html
+    // Page-specific listeners are handled in router.js after page loads
+
+    // Refresh symbols button (only if exists)
+    const refreshSymbolsBtn = document.getElementById('refreshSymbols');
+    if (refreshSymbolsBtn) {
+        refreshSymbolsBtn.addEventListener('click', loadSymbols);
+    }
+    
+    // Quantity type change (only if exists)
+    const quantityTypeSelect = document.getElementById('quantityType');
+    if (quantityTypeSelect) {
+        quantityTypeSelect.addEventListener('change', handleQuantityTypeChange);
+    }
     
     // Funding tab switching
     const fundingIncomeTab = document.getElementById('fundingIncomeTab');
@@ -80,9 +76,195 @@ function setupEventListeners() {
         fundingIncomeSymbol.addEventListener('change', loadFundingIncome);
     }
     
+    const fundingIncomeSort = document.getElementById('fundingIncomeSort');
+    if (fundingIncomeSort) {
+        fundingIncomeSort.addEventListener('change', loadFundingIncome);
+    }
+    
+    const fundingIncomeLimit = document.getElementById('fundingIncomeLimit');
+    if (fundingIncomeLimit) {
+        fundingIncomeLimit.addEventListener('change', loadFundingIncome);
+    }
+    
+    const exportFundingIncomeBtn = document.getElementById('exportFundingIncomeBtn');
+    if (exportFundingIncomeBtn) {
+        exportFundingIncomeBtn.addEventListener('click', exportFundingIncomeCSV);
+    }
+    
+    const showFundingIncomeSummaryBtn = document.getElementById('showFundingIncomeSummaryBtn');
+    if (showFundingIncomeSummaryBtn) {
+        showFundingIncomeSummaryBtn.addEventListener('click', () => {
+            const summaryDiv = document.getElementById('fundingIncomeSummary');
+            if (summaryDiv) {
+                summaryDiv.style.display = summaryDiv.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+    }
+    
+    const hideFundingIncomeSummaryBtn = document.getElementById('hideFundingIncomeSummaryBtn');
+    if (hideFundingIncomeSummaryBtn) {
+        hideFundingIncomeSummaryBtn.addEventListener('click', () => {
+            const summaryDiv = document.getElementById('fundingIncomeSummary');
+            if (summaryDiv) {
+                summaryDiv.style.display = 'none';
+            }
+        });
+    }
+    
+    const loadFundingIncomeSummaryBtn = document.getElementById('loadFundingIncomeSummaryBtn');
+    if (loadFundingIncomeSummaryBtn) {
+        loadFundingIncomeSummaryBtn.addEventListener('click', loadFundingIncomeSummary);
+    }
+    
     const fundingRateSymbol = document.getElementById('fundingRateSymbol');
     if (fundingRateSymbol) {
         fundingRateSymbol.addEventListener('change', loadFundingRate);
+    }
+    
+    const fundingRateSort = document.getElementById('fundingRateSort');
+    if (fundingRateSort) {
+        fundingRateSort.addEventListener('change', loadFundingRate);
+    }
+    
+    const fundingRateLimit = document.getElementById('fundingRateLimit');
+    if (fundingRateLimit) {
+        fundingRateLimit.addEventListener('change', loadFundingRate);
+    }
+    
+    const exportFundingRateBtn = document.getElementById('exportFundingRateBtn');
+    if (exportFundingRateBtn) {
+        exportFundingRateBtn.addEventListener('click', exportFundingRateCSV);
+    }
+    
+    // Market Data tab switching
+    const orderBookTab = document.getElementById('orderBookTab');
+    const tradesTab = document.getElementById('tradesTab');
+    const ticker24hrTab = document.getElementById('ticker24hrTab');
+    const orderBookContent = document.getElementById('orderBookContent');
+    const tradesContent = document.getElementById('tradesContent');
+    const ticker24hrContent = document.getElementById('ticker24hrContent');
+    
+    if (orderBookTab && tradesTab && ticker24hrTab) {
+        orderBookTab.addEventListener('click', () => {
+            orderBookTab.style.background = '#667eea';
+            orderBookTab.style.color = 'white';
+            tradesTab.style.background = '#f5f5f5';
+            tradesTab.style.color = '#666';
+            ticker24hrTab.style.background = '#f5f5f5';
+            ticker24hrTab.style.color = '#666';
+            orderBookContent.style.display = 'block';
+            tradesContent.style.display = 'none';
+            ticker24hrContent.style.display = 'none';
+            loadOrderBook();
+        });
+        
+        tradesTab.addEventListener('click', () => {
+            tradesTab.style.background = '#667eea';
+            tradesTab.style.color = 'white';
+            orderBookTab.style.background = '#f5f5f5';
+            orderBookTab.style.color = '#666';
+            ticker24hrTab.style.background = '#f5f5f5';
+            ticker24hrTab.style.color = '#666';
+            orderBookContent.style.display = 'none';
+            tradesContent.style.display = 'block';
+            ticker24hrContent.style.display = 'none';
+            loadTrades();
+        });
+        
+        ticker24hrTab.addEventListener('click', () => {
+            ticker24hrTab.style.background = '#667eea';
+            ticker24hrTab.style.color = 'white';
+            orderBookTab.style.background = '#f5f5f5';
+            orderBookTab.style.color = '#666';
+            tradesTab.style.background = '#f5f5f5';
+            tradesTab.style.color = '#666';
+            orderBookContent.style.display = 'none';
+            tradesContent.style.display = 'none';
+            ticker24hrContent.style.display = 'block';
+            loadTicker24hr();
+        });
+    }
+    
+    const loadMarketDataBtn = document.getElementById('loadMarketDataBtn');
+    if (loadMarketDataBtn) {
+        loadMarketDataBtn.addEventListener('click', () => {
+            const symbol = document.getElementById('marketDataSymbol')?.value;
+            if (!symbol) {
+                showNotification('Vui lòng chọn symbol', 'error');
+                return;
+            }
+            loadOrderBook();
+            loadTrades();
+            loadTicker24hr();
+        });
+    }
+    
+    // Account tab switching
+    const accountSummaryTab = document.getElementById('accountSummaryTab');
+    const accountBalanceTab = document.getElementById('accountBalanceTab');
+    const accountSummaryContent = document.getElementById('accountSummaryContent');
+    const accountBalanceContent = document.getElementById('accountBalanceContent');
+    
+    if (accountSummaryTab && accountBalanceTab) {
+        accountSummaryTab.addEventListener('click', () => {
+            accountSummaryTab.style.background = '#667eea';
+            accountSummaryTab.style.color = 'white';
+            accountBalanceTab.style.background = '#f5f5f5';
+            accountBalanceTab.style.color = '#666';
+            accountSummaryContent.style.display = 'block';
+            accountBalanceContent.style.display = 'none';
+        });
+        
+        accountBalanceTab.addEventListener('click', () => {
+            accountBalanceTab.style.background = '#667eea';
+            accountBalanceTab.style.color = 'white';
+            accountSummaryTab.style.background = '#f5f5f5';
+            accountSummaryTab.style.color = '#666';
+            accountSummaryContent.style.display = 'none';
+            accountBalanceContent.style.display = 'block';
+            loadAccountBalance();
+        });
+    }
+    
+    // Liquidation
+    const loadLiquidationBtn = document.getElementById('loadLiquidationBtn');
+    if (loadLiquidationBtn) {
+        loadLiquidationBtn.addEventListener('click', loadLiquidation);
+    }
+    
+    const liquidationSymbol = document.getElementById('liquidationSymbol');
+    if (liquidationSymbol) {
+        liquidationSymbol.addEventListener('change', loadLiquidation);
+    }
+    
+    const liquidationLimit = document.getElementById('liquidationLimit');
+    if (liquidationLimit) {
+        liquidationLimit.addEventListener('change', loadLiquidation);
+    }
+    
+    // Populate market data symbol dropdown
+    const marketDataSymbol = document.getElementById('marketDataSymbol');
+    if (marketDataSymbol) {
+        loadSymbols().then(symbols => {
+            symbols.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.symbol;
+                option.textContent = s.symbol;
+                marketDataSymbol.appendChild(option);
+            });
+        });
+    }
+    
+    // Populate liquidation symbol dropdown
+    if (liquidationSymbol) {
+        loadSymbols().then(symbols => {
+            symbols.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.symbol;
+                option.textContent = s.symbol;
+                liquidationSymbol.appendChild(option);
+            });
+        });
     }
 }
 
@@ -112,6 +294,14 @@ function switchTab(tabName) {
     } else if (tabName === 'position-history') {
         loadPositionHistory();
     } else if (tabName === 'funding') {
+        loadFundingIncome();
+    } else if (tabName === 'market-data') {
+        // Market data tab - load symbols if needed
+    } else if (tabName === 'liquidation') {
+        loadLiquidation();
+    } else if (tabName === 'account') {
+        loadAccount();
+        loadAccountBalance();
         loadFundingIncome();
     }
     
@@ -394,40 +584,80 @@ function togglePriceField() {
 
 // Toggle Schedule Field
 function toggleScheduleField() {
-    const scheduleOrder = document.getElementById('scheduleOrder').checked;
-    const scheduleGroup = document.getElementById('scheduleGroup');
-    if (scheduleOrder) {
-        scheduleGroup.style.display = 'block';
+    const scheduleOrder = document.getElementById('scheduleOrder');
+    if (!scheduleOrder) return;
+    
+    const scheduleFields = document.getElementById('scheduleFields');
+    if (!scheduleFields) return;
+    
+    if (scheduleOrder.checked) {
+        scheduleFields.style.display = 'block';
         // Set default time to 10 minutes from now
         const now = new Date();
         const targetTime = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes from now
         
         // Set default values
-        document.getElementById('scheduleDate').value = formatDate(targetTime);
-        document.getElementById('scheduleHour').value = targetTime.getHours();
-        document.getElementById('scheduleMinute').value = targetTime.getMinutes();
-        document.getElementById('scheduleSecond').value = targetTime.getSeconds();
+        const scheduleDate = document.getElementById('scheduleDate');
+        const scheduleHour = document.getElementById('scheduleHour');
+        const scheduleMinute = document.getElementById('scheduleMinute');
+        const scheduleSecond = document.getElementById('scheduleSecond');
         
-        // Set default cancel time (2 minutes after order time)
+        if (scheduleDate) scheduleDate.value = formatDate(targetTime);
+        if (scheduleHour !== null) scheduleHour.value = targetTime.getHours();
+        if (scheduleMinute !== null) scheduleMinute.value = targetTime.getMinutes();
+        if (scheduleSecond !== null) scheduleSecond.value = targetTime.getSeconds();
+        
         // Auto set close position time to 2 minutes after scheduled time
         const closePositionTime = new Date(targetTime.getTime() + 2 * 60 * 1000);
-        document.getElementById('closePositionDate').value = formatDate(closePositionTime);
-        document.getElementById('closePositionHour').value = closePositionTime.getHours();
-        document.getElementById('closePositionMinute').value = closePositionTime.getMinutes();
-        document.getElementById('closePositionSecond').value = closePositionTime.getSeconds();
+        const closePositionDate = document.getElementById('closePositionDate');
+        const closePositionHour = document.getElementById('closePositionHour');
+        const closePositionMinute = document.getElementById('closePositionMinute');
+        const closePositionSecond = document.getElementById('closePositionSecond');
+        
+        if (closePositionDate) closePositionDate.value = formatDate(closePositionTime);
+        if (closePositionHour !== null) closePositionHour.value = closePositionTime.getHours();
+        if (closePositionMinute !== null) closePositionMinute.value = closePositionTime.getMinutes();
+        if (closePositionSecond !== null) closePositionSecond.value = closePositionTime.getSeconds();
         
         // Start countdown
-        startCountdown();
+        if (typeof startCountdown === 'function') {
+            startCountdown();
+        }
     } else {
-        scheduleGroup.style.display = 'none';
-        clearInterval(window.countdownInterval);
+        scheduleFields.style.display = 'none';
+        if (window.countdownInterval) {
+            clearInterval(window.countdownInterval);
+        }
     }
+}
+
+// Toggle Close Position At Time Field
+function toggleClosePositionAtTimeField() {
+    const closePositionAtTime = document.getElementById('closePositionAtTime');
+    const closePositionTimeFields = document.getElementById('closePositionTimeFields');
     
-    // Toggle close position at time
-    document.getElementById('closePositionAtTime').addEventListener('change', function() {
-        const closePositionTimeGroup = document.getElementById('closePositionTimeGroup');
-        closePositionTimeGroup.style.display = this.checked ? 'block' : 'none';
-    });
+    if (closePositionAtTime && closePositionTimeFields) {
+        closePositionTimeFields.style.display = closePositionAtTime.checked ? 'block' : 'none';
+        
+        // Auto set default time if checked
+        if (closePositionAtTime.checked) {
+            const scheduleDate = document.getElementById('scheduleDate')?.value;
+            const scheduleHour = document.getElementById('scheduleHour')?.value;
+            const scheduleMinute = document.getElementById('scheduleMinute')?.value;
+            const scheduleSecond = document.getElementById('scheduleSecond')?.value;
+            
+            if (scheduleDate && scheduleHour !== null && scheduleMinute !== null && scheduleSecond !== null) {
+                // Set close position time to 2 minutes after scheduled time
+                const scheduledTime = new Date(`${scheduleDate}T${String(scheduleHour).padStart(2, '0')}:${String(scheduleMinute).padStart(2, '0')}:${String(scheduleSecond).padStart(2, '0')}`);
+                const closePositionTime = new Date(scheduledTime.getTime() + 2 * 60 * 1000); // 2 minutes after
+                
+                document.getElementById('closePositionDate').value = formatDate(closePositionTime);
+                document.getElementById('closePositionHour').value = closePositionTime.getHours();
+                document.getElementById('closePositionMinute').value = closePositionTime.getMinutes();
+                document.getElementById('closePositionSecond').value = closePositionTime.getSeconds();
+            }
+        }
+    }
 }
 
 // Format date for input[type="date"]
@@ -442,14 +672,30 @@ function formatDate(date) {
 function startCountdown() {
     clearInterval(window.countdownInterval);
     
+    const countdownElement = document.getElementById('countdown');
+    if (!countdownElement) {
+        // Countdown element doesn't exist on this page, skip
+        return;
+    }
+    
     const updateCountdown = () => {
-        const date = document.getElementById('scheduleDate').value;
-        const hour = parseInt(document.getElementById('scheduleHour').value) || 0;
-        const minute = parseInt(document.getElementById('scheduleMinute').value) || 0;
-        const second = parseInt(document.getElementById('scheduleSecond').value) || 0;
+        const scheduleDateEl = document.getElementById('scheduleDate');
+        const scheduleHourEl = document.getElementById('scheduleHour');
+        const scheduleMinuteEl = document.getElementById('scheduleMinute');
+        const scheduleSecondEl = document.getElementById('scheduleSecond');
+        const countdownEl = document.getElementById('countdown');
+        
+        if (!scheduleDateEl || !scheduleHourEl || !scheduleMinuteEl || !scheduleSecondEl || !countdownEl) {
+            return;
+        }
+        
+        const date = scheduleDateEl.value;
+        const hour = parseInt(scheduleHourEl.value) || 0;
+        const minute = parseInt(scheduleMinuteEl.value) || 0;
+        const second = parseInt(scheduleSecondEl.value) || 0;
         
         if (!date) {
-            document.getElementById('countdown').textContent = 'Vui lòng chọn ngày';
+            countdownEl.textContent = 'Vui lòng chọn ngày';
             return;
         }
         
@@ -458,8 +704,8 @@ function startCountdown() {
         const diff = targetTime.getTime() - now.getTime();
         
         if (diff <= 0) {
-            document.getElementById('countdown').textContent = '⚠️ Thời gian đã qua';
-            document.getElementById('countdown').style.color = '#dc3545';
+            countdownEl.textContent = '⚠️ Thời gian đã qua';
+            countdownEl.style.color = '#dc3545';
             return;
         }
         
@@ -474,8 +720,8 @@ function startCountdown() {
         if (minutes > 0 || hours > 0 || days > 0) countdownText += `${minutes} phút `;
         countdownText += `${seconds} giây`;
         
-        document.getElementById('countdown').textContent = `⏰ Còn lại: ${countdownText}`;
-        document.getElementById('countdown').style.color = '#667eea';
+        countdownEl.textContent = `⏰ Còn lại: ${countdownText}`;
+        countdownEl.style.color = '#667eea';
     };
     
     updateCountdown();
@@ -1045,6 +1291,11 @@ async function loadPositionHistory() {
     }
 }
 
+// Store funding data for export
+let currentFundingIncomeData = [];
+let currentFundingRateData = [];
+let currentFundingRateCurrentData = [];
+
 // Load Funding Income
 async function loadFundingIncome() {
     const listContainer = document.getElementById('fundingIncomeList');
@@ -1058,8 +1309,19 @@ async function loadFundingIncome() {
     `;
     
     try {
-        const symbol = document.getElementById('fundingIncomeSymbol').value;
-        const url = `${API_BASE}/api/funding-income${symbol ? `?symbol=${symbol}` : '?limit=100'}`;
+        const symbol = document.getElementById('fundingIncomeSymbol')?.value || '';
+        const sortSelect = document.getElementById('fundingIncomeSort');
+        const limitSelect = document.getElementById('fundingIncomeLimit');
+        const sortValue = sortSelect?.value || 'time-desc';
+        const limit = limitSelect?.value || '50';
+        
+        const [sortBy, sortOrder] = sortValue.split('-');
+        
+        let url = `${API_BASE}/api/funding-income?limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+        if (symbol) {
+            url += `&symbol=${symbol}`;
+        }
+        
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -1067,6 +1329,7 @@ async function loadFundingIncome() {
         }
         
         const income = await response.json();
+        currentFundingIncomeData = income; // Store for export
         
         if (!Array.isArray(income) || income.length === 0) {
             listContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Chưa có funding income nào</p>';
@@ -1080,6 +1343,9 @@ async function loadFundingIncome() {
             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                 <p style="font-size: 18px; font-weight: bold; color: ${incomeColor};">
                     Tổng Funding Income: ${totalIncome >= 0 ? '+' : ''}${formatNumber(totalIncome)} USDT
+                </p>
+                <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                    Hiển thị ${income.length} bản ghi
                 </p>
             </div>
             ${income.map(item => {
@@ -1106,6 +1372,122 @@ async function loadFundingIncome() {
     }
 }
 
+// Load Funding Rate Current (Real-time)
+async function loadFundingRateCurrent() {
+    const listContainer = document.getElementById('fundingRateCurrentList');
+    
+    // Show loading
+    listContainer.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Đang tải funding rate hiện tại...</p>
+        </div>
+    `;
+    
+    try {
+        const symbol = document.getElementById('fundingRateCurrentSymbol')?.value || '';
+        
+        let url = `${API_BASE}/api/funding-rate-current`;
+        if (symbol) {
+            url += `?symbol=${symbol}`;
+        }
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const rates = await response.json();
+        currentFundingRateCurrentData = rates; // Store for export
+        
+        if (!Array.isArray(rates) || rates.length === 0) {
+            listContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Chưa có dữ liệu funding rate hiện tại</p>';
+            return;
+        }
+        
+        // Calculate time until next funding
+        const now = Date.now();
+        
+        listContainer.innerHTML = `
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                <p style="font-size: 14px; color: #666;">
+                    Hiển thị ${rates.length} symbols • Sắp xếp theo |funding rate| từ cao xuống thấp
+                </p>
+            </div>
+            ${rates.map(rate => {
+                const ratePercent = (rate.fundingRate * 100).toFixed(4);
+                const rateColor = rate.fundingRate >= 0 ? '#28a745' : '#dc3545';
+                const nextFundingTime = rate.nextFundingTime ? new Date(rate.nextFundingTime) : null;
+                const timeUntilNext = nextFundingTime ? Math.max(0, Math.floor((nextFundingTime.getTime() - now) / 1000)) : null;
+                const hoursUntil = timeUntilNext ? Math.floor(timeUntilNext / 3600) : null;
+                const minutesUntil = timeUntilNext ? Math.floor((timeUntilNext % 3600) / 60) : null;
+                
+                return `
+                    <div class="order-item">
+                        <div class="order-info">
+                            <h3>${rate.symbol}</h3>
+                            <p><strong>Funding Rate:</strong> 
+                                <span style="color: ${rateColor}; font-weight: bold; font-size: 18px;">${ratePercent}%</span>
+                                <span style="color: #666; font-size: 14px;">(${rate.fundingRate})</span>
+                            </p>
+                            <p><strong>Mark Price:</strong> ${formatNumber(rate.markPrice)} USDT</p>
+                            <p><strong>Index Price:</strong> ${formatNumber(rate.indexPrice)} USDT</p>
+                            ${nextFundingTime ? `
+                                <p><strong>Funding tiếp theo:</strong> ${formatDateTime(nextFundingTime)}</p>
+                                ${timeUntilNext !== null && timeUntilNext > 0 ? `
+                                    <p style="color: #ff9800; font-weight: bold;">
+                                        ⏰ Còn ${hoursUntil}h ${minutesUntil}m đến funding tiếp theo
+                                    </p>
+                                ` : '<p style="color: #28a745; font-weight: bold;">✅ Đang trong kỳ funding</p>'}
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        `;
+    } catch (error) {
+        showNotification('Lỗi khi tải funding rate hiện tại: ' + error.message, 'error');
+        const listContainer = document.getElementById('fundingRateCurrentList');
+        listContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Lỗi: ${error.message}</p>`;
+    }
+}
+
+// Export Funding Rate Current to CSV
+function exportFundingRateCurrentCSV() {
+    if (!currentFundingRateCurrentData || currentFundingRateCurrentData.length === 0) {
+        showNotification('Không có dữ liệu để export', 'error');
+        return;
+    }
+    
+    const headers = ['Symbol', 'Funding Rate', 'Funding Rate (%)', 'Mark Price (USDT)', 'Index Price (USDT)', 'Next Funding Time'];
+    const rows = currentFundingRateCurrentData.map(rate => [
+        rate.symbol,
+        rate.fundingRate,
+        (rate.fundingRate * 100).toFixed(4),
+        rate.markPrice,
+        rate.indexPrice,
+        rate.nextFundingTime ? formatDateTime(new Date(rate.nextFundingTime)) : ''
+    ]);
+    
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `funding_rate_current_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('✅ Đã export CSV thành công', 'success');
+}
+
 // Load Funding Rate
 async function loadFundingRate() {
     const listContainer = document.getElementById('fundingRateList');
@@ -1119,8 +1501,19 @@ async function loadFundingRate() {
     `;
     
     try {
-        const symbol = document.getElementById('fundingRateSymbol').value;
-        const url = `${API_BASE}/api/funding-rate${symbol ? `?symbol=${symbol}` : '?limit=100'}`;
+        const symbol = document.getElementById('fundingRateSymbol')?.value || '';
+        const sortSelect = document.getElementById('fundingRateSort');
+        const limitSelect = document.getElementById('fundingRateLimit');
+        const sortValue = sortSelect?.value || 'absRate-desc';
+        const limit = limitSelect?.value || '50';
+        
+        const [sortBy, sortOrder] = sortValue.split('-');
+        
+        let url = `${API_BASE}/api/funding-rate?limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+        if (symbol) {
+            url += `&symbol=${symbol}`;
+        }
+        
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -1128,32 +1521,175 @@ async function loadFundingRate() {
         }
         
         const rates = await response.json();
+        currentFundingRateData = rates; // Store for export
         
         if (!Array.isArray(rates) || rates.length === 0) {
             listContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Chưa có funding rate nào</p>';
             return;
         }
 
-        listContainer.innerHTML = rates.map(rate => {
-            const time = formatDateTime(new Date(rate.fundingTime));
-            const ratePercent = (rate.fundingRate * 100).toFixed(4);
-            const rateColor = rate.fundingRate >= 0 ? '#28a745' : '#dc3545';
-            
-            return `
-                <div class="order-item">
-                    <div class="order-info">
-                        <h3>${rate.symbol}</h3>
-                        <p><strong>Funding Rate:</strong> <span style="color: ${rateColor}; font-weight: bold;">${ratePercent}%</span> (${rate.fundingRate})</p>
-                        <p><strong>Mark Price:</strong> ${formatNumber(rate.markPrice)} USDT</p>
-                        <p><strong>Thời gian:</strong> ${time}</p>
+        listContainer.innerHTML = `
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                <p style="font-size: 14px; color: #666;">
+                    Hiển thị ${rates.length} bản ghi
+                </p>
+            </div>
+            ${rates.map(rate => {
+                const time = formatDateTime(new Date(rate.fundingTime));
+                const ratePercent = (rate.fundingRate * 100).toFixed(4);
+                const rateColor = rate.fundingRate >= 0 ? '#28a745' : '#dc3545';
+                
+                return `
+                    <div class="order-item">
+                        <div class="order-info">
+                            <h3>${rate.symbol}</h3>
+                            <p><strong>Funding Rate:</strong> <span style="color: ${rateColor}; font-weight: bold;">${ratePercent}%</span> (${rate.fundingRate})</p>
+                            <p><strong>Mark Price:</strong> ${formatNumber(rate.markPrice)} USDT</p>
+                            <p><strong>Thời gian:</strong> ${time}</p>
+                        </div>
                     </div>
-                </div>
-            `;
-        }).join('');
+                `;
+            }).join('')}
+        `;
     } catch (error) {
         showNotification('Lỗi khi tải funding rate: ' + error.message, 'error');
         const listContainer = document.getElementById('fundingRateList');
         listContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Lỗi: ${error.message}</p>`;
+    }
+}
+
+// Export Funding Income to CSV
+function exportFundingIncomeCSV() {
+    if (!currentFundingIncomeData || currentFundingIncomeData.length === 0) {
+        showNotification('Không có dữ liệu để export', 'error');
+        return;
+    }
+    
+    const headers = ['Symbol', 'Income (USDT)', 'Time', 'Info'];
+    const rows = currentFundingIncomeData.map(item => [
+        item.symbol,
+        item.income,
+        formatDateTime(new Date(item.time)),
+        item.info || ''
+    ]);
+    
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `funding_income_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('✅ Đã export CSV thành công', 'success');
+}
+
+// Export Funding Rate to CSV
+function exportFundingRateCSV() {
+    if (!currentFundingRateData || currentFundingRateData.length === 0) {
+        showNotification('Không có dữ liệu để export', 'error');
+        return;
+    }
+    
+    const headers = ['Symbol', 'Funding Rate', 'Funding Rate (%)', 'Mark Price (USDT)', 'Time'];
+    const rows = currentFundingRateData.map(rate => [
+        rate.symbol,
+        rate.fundingRate,
+        (rate.fundingRate * 100).toFixed(4),
+        rate.markPrice,
+        formatDateTime(new Date(rate.fundingTime))
+    ]);
+    
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `funding_rate_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('✅ Đã export CSV thành công', 'success');
+}
+
+// Load Funding Income Summary
+async function loadFundingIncomeSummary() {
+    const summaryList = document.getElementById('fundingIncomeSummaryList');
+    if (!summaryList) return;
+    
+    summaryList.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Đang tải tổng hợp...</p>
+        </div>
+    `;
+    
+    try {
+        const symbol = document.getElementById('fundingIncomeSymbol')?.value || '';
+        const period = document.getElementById('fundingIncomePeriod')?.value || 'day';
+        
+        let url = `${API_BASE}/api/funding-income-summary?period=${period}`;
+        if (symbol) {
+            url += `&symbol=${symbol}`;
+        }
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const summary = await response.json();
+        
+        if (!Array.isArray(summary) || summary.length === 0) {
+            summaryList.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Chưa có dữ liệu tổng hợp</p>';
+            return;
+        }
+        
+        const totalAll = summary.reduce((sum, item) => sum + item.totalIncome, 0);
+        const totalColor = totalAll >= 0 ? '#28a745' : '#dc3545';
+        
+        summaryList.innerHTML = `
+            <div style="background: #fff; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 2px solid ${totalColor};">
+                <p style="font-size: 16px; font-weight: bold; color: ${totalColor};">
+                    Tổng cộng: ${totalAll >= 0 ? '+' : ''}${formatNumber(totalAll)} USDT
+                </p>
+            </div>
+            ${summary.map(item => {
+                const itemColor = item.totalIncome >= 0 ? '#28a745' : '#dc3545';
+                return `
+                    <div style="background: #fff; padding: 10px; border-radius: 5px; margin-bottom: 5px; border-left: 4px solid ${itemColor};">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${item.period}</strong>
+                                <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                                    ${item.count} giao dịch • ${item.symbolCount} symbol
+                                </p>
+                            </div>
+                            <p style="color: ${itemColor}; font-weight: bold; font-size: 16px;">
+                                ${item.totalIncome >= 0 ? '+' : ''}${formatNumber(item.totalIncome)} USDT
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        `;
+    } catch (error) {
+        showNotification('Lỗi khi tải tổng hợp: ' + error.message, 'error');
+        summaryList.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Lỗi: ${error.message}</p>`;
     }
 }
 
@@ -1459,6 +1995,273 @@ async function closePosition(symbol) {
     } catch (error) {
         console.error('Lỗi khi đóng vị thế:', error);
         showNotification('❌ Lỗi: ' + error.message, 'error');
+    }
+}
+
+// Load Order Book
+async function loadOrderBook() {
+    const symbol = document.getElementById('marketDataSymbol')?.value;
+    if (!symbol) {
+        document.getElementById('orderBookList').innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Vui lòng chọn symbol</p>';
+        return;
+    }
+    
+    const listContainer = document.getElementById('orderBookList');
+    listContainer.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Đang tải order book...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/market/orderbook/${symbol}?limit=20`);
+        const data = await response.json();
+        
+        listContainer.innerHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <h3 style="color: #dc3545; margin-bottom: 10px;">Bids (Mua)</h3>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${data.bids.map(bid => `
+                            <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee;">
+                                <span style="color: #28a745; font-weight: bold;">${formatNumber(bid.price)}</span>
+                                <span>${formatNumber(bid.quantity)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div>
+                    <h3 style="color: #28a745; margin-bottom: 10px;">Asks (Bán)</h3>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${data.asks.map(ask => `
+                            <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee;">
+                                <span style="color: #dc3545; font-weight: bold;">${formatNumber(ask.price)}</span>
+                                <span>${formatNumber(ask.quantity)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        showNotification('Lỗi khi tải order book: ' + error.message, 'error');
+        listContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Lỗi: ${error.message}</p>`;
+    }
+}
+
+// Load Recent Trades
+async function loadTrades() {
+    const symbol = document.getElementById('marketDataSymbol')?.value;
+    if (!symbol) {
+        document.getElementById('tradesList').innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Vui lòng chọn symbol</p>';
+        return;
+    }
+    
+    const listContainer = document.getElementById('tradesList');
+    listContainer.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Đang tải trades...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/market/trades/${symbol}?limit=50`);
+        const trades = await response.json();
+        
+        listContainer.innerHTML = trades.map(trade => {
+            const time = formatDateTime(new Date(trade.time));
+            const color = trade.isBuyerMaker ? '#dc3545' : '#28a745';
+            return `
+                <div class="order-item">
+                    <div class="order-info">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="color: ${color}; font-weight: bold; font-size: 16px;">
+                                    ${formatNumber(trade.price)} USDT
+                                </p>
+                                <p style="font-size: 14px; color: #666;">${formatNumber(trade.quantity)}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="font-size: 12px; color: #999;">${time}</p>
+                                <p style="font-size: 12px; color: #999;">${trade.isBuyerMaker ? 'SELL' : 'BUY'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        showNotification('Lỗi khi tải trades: ' + error.message, 'error');
+        listContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Lỗi: ${error.message}</p>`;
+    }
+}
+
+// Load 24hr Ticker
+async function loadTicker24hr() {
+    const symbol = document.getElementById('marketDataSymbol')?.value;
+    if (!symbol) {
+        document.getElementById('ticker24hrInfo').innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Vui lòng chọn symbol</p>';
+        return;
+    }
+    
+    const container = document.getElementById('ticker24hrInfo');
+    container.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Đang tải 24h stats...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/market/ticker/24hr/${symbol}`);
+        const ticker = await response.json();
+        
+        const priceChangeColor = ticker.priceChangePercent >= 0 ? '#28a745' : '#dc3545';
+        
+        container.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="account-item">
+                    <strong>Giá hiện tại:</strong>
+                    <p style="font-size: 20px; font-weight: bold;">${formatNumber(ticker.lastPrice)} USDT</p>
+                </div>
+                <div class="account-item">
+                    <strong>Thay đổi 24h:</strong>
+                    <p style="color: ${priceChangeColor}; font-size: 18px; font-weight: bold;">
+                        ${ticker.priceChangePercent >= 0 ? '+' : ''}${ticker.priceChangePercent.toFixed(2)}%
+                    </p>
+                </div>
+                <div class="account-item">
+                    <strong>Giá cao nhất:</strong>
+                    <p style="color: #28a745;">${formatNumber(ticker.highPrice)} USDT</p>
+                </div>
+                <div class="account-item">
+                    <strong>Giá thấp nhất:</strong>
+                    <p style="color: #dc3545;">${formatNumber(ticker.lowPrice)} USDT</p>
+                </div>
+                <div class="account-item">
+                    <strong>Volume 24h:</strong>
+                    <p>${formatNumber(ticker.volume)}</p>
+                </div>
+                <div class="account-item">
+                    <strong>Quote Volume:</strong>
+                    <p>${formatNumber(ticker.quoteVolume)} USDT</p>
+                </div>
+                <div class="account-item">
+                    <strong>Bid Price:</strong>
+                    <p>${formatNumber(ticker.bidPrice)} USDT</p>
+                </div>
+                <div class="account-item">
+                    <strong>Ask Price:</strong>
+                    <p>${formatNumber(ticker.askPrice)} USDT</p>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        showNotification('Lỗi khi tải 24h stats: ' + error.message, 'error');
+        container.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Lỗi: ${error.message}</p>`;
+    }
+}
+
+// Load Liquidation History
+async function loadLiquidation() {
+    const listContainer = document.getElementById('liquidationList');
+    listContainer.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Đang tải lịch sử thanh lý...</p>
+        </div>
+    `;
+    
+    try {
+        const symbol = document.getElementById('liquidationSymbol')?.value || '';
+        const limit = document.getElementById('liquidationLimit')?.value || '50';
+        
+        let url = `${API_BASE}/api/force-orders?limit=${limit}`;
+        if (symbol) {
+            url += `&symbol=${symbol}`;
+        }
+        
+        const response = await fetch(url);
+        const orders = await response.json();
+        
+        if (!Array.isArray(orders) || orders.length === 0) {
+            listContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Chưa có lệnh thanh lý nào</p>';
+            return;
+        }
+        
+        listContainer.innerHTML = orders.map(order => {
+            const time = formatDateTime(new Date(order.time));
+            const forceType = order.forceCloseType === 'LIQUIDATION' ? 'Thanh lý' : 'ADL';
+            const forceColor = order.forceCloseType === 'LIQUIDATION' ? '#dc3545' : '#ff9800';
+            
+            return `
+                <div class="order-item">
+                    <div class="order-info">
+                        <h3>${order.symbol} - ${forceType}</h3>
+                        <p style="color: ${forceColor}; font-weight: bold;">
+                            <strong>Loại:</strong> ${forceType}
+                        </p>
+                        <p><strong>Side:</strong> ${order.side}</p>
+                        <p><strong>Type:</strong> ${order.type}</p>
+                        <p><strong>Số lượng:</strong> ${formatNumber(order.origQty)}</p>
+                        <p><strong>Giá:</strong> ${formatNumber(order.price)} USDT</p>
+                        <p><strong>Thời gian:</strong> ${time}</p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        showNotification('Lỗi khi tải lịch sử thanh lý: ' + error.message, 'error');
+        listContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Lỗi: ${error.message}</p>`;
+    }
+}
+
+// Load Account Balance
+async function loadAccountBalance() {
+    const listContainer = document.getElementById('accountBalanceList');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Đang tải balance...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/account/balance`);
+        const balances = await response.json();
+        
+        if (!Array.isArray(balances) || balances.length === 0) {
+            listContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Không có balance nào</p>';
+            return;
+        }
+        
+        listContainer.innerHTML = balances.map(balance => {
+            const marginColor = balance.marginUsed > 0 ? '#ff9800' : '#28a745';
+            
+            return `
+                <div class="order-item">
+                    <div class="order-info">
+                        <h3>${balance.asset}</h3>
+                        <p><strong>Wallet Balance:</strong> ${formatNumber(balance.walletBalance)}</p>
+                        <p><strong>Available Balance:</strong> ${formatNumber(balance.availableBalance)}</p>
+                        <p><strong>Margin Used:</strong> <span style="color: ${marginColor};">${formatNumber(balance.marginUsed)}</span></p>
+                        <p><strong>Margin Available:</strong> ${formatNumber(balance.marginAvailable)}</p>
+                        <p><strong>Unrealized PnL:</strong> 
+                            <span style="color: ${balance.crossUnPnl >= 0 ? '#28a745' : '#dc3545'};">
+                                ${formatNumber(balance.crossUnPnl)}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        showNotification('Lỗi khi tải balance: ' + error.message, 'error');
+        listContainer.innerHTML = `<p style="text-align: center; color: #e74c3c; padding: 20px;">Lỗi: ${error.message}</p>`;
     }
 }
 

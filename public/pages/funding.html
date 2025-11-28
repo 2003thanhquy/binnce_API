@@ -1,0 +1,112 @@
+<div class="card">
+    <h2>Lịch Sử Funding</h2>
+    <div class="tabs" style="margin-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
+        <button class="tab-btn" id="fundingIncomeTab" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; cursor: pointer; border-radius: 5px 5px 0 0;">Funding Income</button>
+        <button class="tab-btn" id="fundingRateCurrentTab" style="flex: 1; padding: 10px; background: #f5f5f5; color: #666; border: none; cursor: pointer; border-radius: 5px 5px 0 0;">Funding Rate (Hiện Tại)</button>
+        <button class="tab-btn" id="fundingRateTab" style="flex: 1; padding: 10px; background: #f5f5f5; color: #666; border: none; cursor: pointer; border-radius: 5px 5px 0 0;">Funding Rate (Lịch Sử)</button>
+    </div>
+    
+    <div id="fundingIncomeContent">
+        <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+            <strong>Funding Income:</strong> Lịch sử phí funding bạn đã nhận/trả cho từng kỳ funding.
+        </p>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; min-width: 150px;">
+                <label for="fundingIncomeSymbol">Lọc theo cặp:</label>
+                <select id="fundingIncomeSymbol" data-symbol-dropdown>
+                    <option value="">Tất cả</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 150px;">
+                <label for="fundingIncomeSort">Sắp xếp:</label>
+                <select id="fundingIncomeSort">
+                    <option value="time-desc">Thời gian (Mới nhất)</option>
+                    <option value="time-asc">Thời gian (Cũ nhất)</option>
+                    <option value="income-desc">Income (Cao → Thấp)</option>
+                    <option value="income-asc">Income (Thấp → Cao)</option>
+                    <option value="symbol-asc">Symbol (A-Z)</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 120px;">
+                <label for="fundingIncomeLimit">Số lượng:</label>
+                <select id="fundingIncomeLimit">
+                    <option value="20">20</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+            </div>
+            <button class="btn-primary" id="exportFundingIncomeBtn" style="padding: 10px 20px; white-space: nowrap;">📥 Export CSV</button>
+            <button class="btn-primary" id="showFundingIncomeSummaryBtn" style="padding: 10px 20px; white-space: nowrap;">📊 Tổng hợp</button>
+        </div>
+        <div id="fundingIncomeSummary" style="display: none; background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <h3 style="margin-bottom: 10px;">Tổng hợp Funding Income</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                <select id="fundingIncomePeriod" style="padding: 8px; flex: 1; max-width: 200px;">
+                    <option value="day">Theo ngày</option>
+                    <option value="week">Theo tuần</option>
+                    <option value="month">Theo tháng</option>
+                </select>
+                <button class="btn-primary" id="loadFundingIncomeSummaryBtn" style="padding: 8px 20px;">Tải</button>
+                <button class="btn-secondary" id="hideFundingIncomeSummaryBtn" style="padding: 8px 20px;">Ẩn</button>
+            </div>
+            <div id="fundingIncomeSummaryList"></div>
+        </div>
+        <div id="fundingIncomeList" class="orders-list"></div>
+    </div>
+    
+    <div id="fundingRateCurrentContent" style="display: none;">
+        <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+            <strong>Funding Rate Hiện Tại:</strong> Funding rate đang áp dụng cho kỳ funding tiếp theo (real-time). Sắp xếp theo absolute value từ cao xuống thấp.
+        </p>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; min-width: 150px;">
+                <label for="fundingRateCurrentSymbol">Lọc theo cặp:</label>
+                <select id="fundingRateCurrentSymbol" data-symbol-dropdown>
+                    <option value="">Tất cả</option>
+                </select>
+            </div>
+            <button class="btn-primary" id="loadFundingRateCurrentBtn" style="padding: 10px 20px; white-space: nowrap;">🔄 Refresh</button>
+            <button class="btn-primary" id="exportFundingRateCurrentBtn" style="padding: 10px 20px; white-space: nowrap;">📥 Export CSV</button>
+        </div>
+        <div id="fundingRateCurrentList" class="orders-list"></div>
+    </div>
+    
+    <div id="fundingRateContent" style="display: none;">
+        <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+            <strong>Funding Rate Lịch Sử:</strong> Lịch sử funding rate của thị trường (không phải của tài khoản).
+        </p>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; min-width: 150px;">
+                <label for="fundingRateSymbol">Lọc theo cặp:</label>
+                <select id="fundingRateSymbol" data-symbol-dropdown>
+                    <option value="">Tất cả</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 150px;">
+                <label for="fundingRateSort">Sắp xếp:</label>
+                <select id="fundingRateSort">
+                    <option value="absRate-desc" selected>Rate (Cao nhất |abs|)</option>
+                    <option value="absRate-asc">Rate (Thấp nhất |abs|)</option>
+                    <option value="rate-desc">Rate (Cao → Thấp)</option>
+                    <option value="rate-asc">Rate (Thấp → Cao)</option>
+                    <option value="time-desc">Thời gian (Mới nhất)</option>
+                    <option value="time-asc">Thời gian (Cũ nhất)</option>
+                    <option value="symbol-asc">Symbol (A-Z)</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 120px;">
+                <label for="fundingRateLimit">Số lượng:</label>
+                <select id="fundingRateLimit">
+                    <option value="20">20</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+            </div>
+            <button class="btn-primary" id="exportFundingRateBtn" style="padding: 10px 20px; white-space: nowrap;">📥 Export CSV</button>
+        </div>
+        <div id="fundingRateList" class="orders-list"></div>
+    </div>
+</div>
+
