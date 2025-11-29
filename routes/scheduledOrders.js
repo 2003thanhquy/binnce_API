@@ -156,5 +156,69 @@ router.delete('/scheduled-order/:orderId', (req, res) => {
   }
 });
 
+// API: Test scheduled order với thời gian giả lập
+router.post('/test-scheduled-order/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { testDelay, testClosePosition } = req.body; // testDelay in seconds
+    
+    const order = scheduledOrderService.getScheduledOrder(orderId);
+    
+    if (!order) {
+      return res.status(404).json({ error: 'Không tìm thấy lệnh' });
+    }
+    
+    if (order.status !== 'scheduled') {
+      return res.status(400).json({ 
+        error: `Lệnh không thể test. Trạng thái hiện tại: ${order.status}` 
+      });
+    }
+    
+    // Validate test delay
+    const delaySeconds = parseInt(testDelay) || 5;
+    if (delaySeconds < 1 || delaySeconds > 60) {
+      return res.status(400).json({ 
+        error: 'Thời gian delay phải từ 1 đến 60 giây' 
+      });
+    }
+    
+    // Hủy interval và timeout hiện tại
+    if (order.checkInterval) {
+      clearInterval(order.checkInterval);
+      order.checkInterval = null;
+    }
+    if (order.timeoutId) {
+      clearTimeout(order.timeoutId);
+      order.timeoutId = null;
+    }
+    
+    // Set thời gian mới (test delay từ bây giờ)
+    const now = new Date();
+    const newScheduledTime = new Date(now.getTime() + delaySeconds * 1000);
+    order.scheduledTime = newScheduledTime.toISOString();
+    
+    // Nếu test close position, set thời gian cắt = thời gian thực thi + 10 giây
+    if (testClosePosition && order.closePositionAtTime && order.closePositionTime) {
+      const newCloseTime = new Date(newScheduledTime.getTime() + 10 * 1000);
+      order.closePositionTime = newCloseTime.toISOString();
+    }
+    
+    // Tạo lại scheduled order với thời gian mới
+    await scheduledOrderService.createScheduledOrder(order);
+    
+    console.log(`🧪 Test mode: Lệnh ${orderId} sẽ được thực thi sau ${delaySeconds} giây`);
+    
+    res.json({ 
+      success: true, 
+      message: `Lệnh sẽ được test và thực thi sau ${delaySeconds} giây`,
+      scheduledTime: newScheduledTime.toISOString(),
+      orderId: orderId
+    });
+  } catch (error) {
+    console.error('Lỗi khi test lệnh:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
 

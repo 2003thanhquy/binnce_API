@@ -70,16 +70,28 @@ function cancelScheduledOrder(orderId) {
     if (order.positionCheckInterval) {
       clearInterval(order.positionCheckInterval);
     }
+    if (order.closePositionCheckInterval) {
+      clearInterval(order.closePositionCheckInterval);
+    }
+    if (order.closePositionTimeoutId) {
+      clearTimeout(order.closePositionTimeoutId);
+    }
     
     order.status = 'cancelled';
     order.cancelledAt = new Date().toISOString();
     scheduledOrders.set(orderId, order);
     
     return { success: true, order };
-  } else if (order.status === 'executed' && order.orderId && order.closePositionTimeoutId) {
-    // Cancel the auto-close position timeout
-    clearTimeout(order.closePositionTimeoutId);
-    order.closePositionTimeoutId = null;
+  } else if (order.status === 'executed' && order.orderId && (order.closePositionTimeoutId || order.closePositionCheckInterval)) {
+    // Cancel the auto-close position timeout and interval
+    if (order.closePositionTimeoutId) {
+      clearTimeout(order.closePositionTimeoutId);
+      order.closePositionTimeoutId = null;
+    }
+    if (order.closePositionCheckInterval) {
+      clearInterval(order.closePositionCheckInterval);
+      order.closePositionCheckInterval = null;
+    }
     scheduledOrders.set(orderId, order);
     
     return { success: true, order, message: 'Đã hủy lịch tự động cắt vị thế' };
@@ -153,22 +165,58 @@ async function createScheduledOrder(orderData) {
   const now = new Date();
   const delay = targetTime.getTime() - now.getTime();
   
+  // Nếu lệnh đã tồn tại và đang scheduled, hủy interval/timeout cũ trước
+  const existingOrder = scheduledOrders.get(orderData.id);
+  if (existingOrder && existingOrder.status === 'scheduled') {
+    if (existingOrder.checkInterval) {
+      clearInterval(existingOrder.checkInterval);
+    }
+    if (existingOrder.timeoutId) {
+      clearTimeout(existingOrder.timeoutId);
+    }
+    if (existingOrder.closePositionCheckInterval) {
+      clearInterval(existingOrder.closePositionCheckInterval);
+    }
+    if (existingOrder.closePositionTimeoutId) {
+      clearTimeout(existingOrder.closePositionTimeoutId);
+    }
+  }
+  
   // Lưu thông tin lệnh
   scheduledOrders.set(orderData.id, orderData);
   
   // Hẹn giờ thực thi lệnh với độ chính xác cao
-  const checkInterval = setInterval(async () => {
+  // Sử dụng interval động: 100ms khi còn xa, 10ms khi gần (< 1 giây)
+  let checkInterval = null;
+  let currentInterval = 100; // Bắt đầu với 100ms
+  
+  const scheduleCheck = async () => {
     const currentTime = new Date().getTime();
     const targetTimeMs = targetTime.getTime();
     const remaining = targetTimeMs - currentTime;
     
+    // Nếu còn > 1 giây, dùng interval 100ms
+    // Nếu còn < 1 giây, dùng interval 10ms để tăng độ chính xác
+    const newInterval = remaining > 1000 ? 100 : 10;
+    
+    // Nếu interval thay đổi, clear và tạo lại
+    if (newInterval !== currentInterval && checkInterval) {
+      clearInterval(checkInterval);
+      currentInterval = newInterval;
+      checkInterval = setInterval(scheduleCheck, currentInterval);
+      return;
+    }
+    
     // Chờ đến đúng hoặc sau thời gian target (không gửi sớm hơn thời gian đặt)
+    // Chỉ thực thi khi remaining <= 0 (đã đến hoặc quá thời gian)
     if (remaining > 0) {
       return;
     }
     
-    // Đã đến hoặc quá thời gian target => thực thi
-    clearInterval(checkInterval);
+    // Đã đến hoặc quá thời gian target => thực thi ngay
+    if (checkInterval) {
+      clearInterval(checkInterval);
+    }
     
     try {
       // Lấy thông tin precision và làm tròn số lượng
@@ -246,26 +294,80 @@ async function createScheduledOrder(orderData) {
       console.log(`   OrderId: ${result.orderId}`);
       
       // Auto close position at scheduled time if enabled
+      // Sử dụng setInterval để đảm bảo độ chính xác cao, tương tự như thực thi lệnh
       if (closePositionAtTime && closePositionTime) {
         const closeTimeDate = new Date(closePositionTime);
-        const closeDelay = closeTimeDate.getTime() - actualExecutionTime.getTime();
+        const closeTimeMs = closeTimeDate.getTime();
         
-        if (closeDelay > 0) {
-          const closeTimeoutId = setTimeout(async () => {
-            const result = await closePosition(orderData.symbol, orderData);
-            if (result.success) {
-              orderData.positionClosedAtTime = true;
-              orderData.positionClosedAtTimeAt = new Date().toISOString();
-              orderData.closeOrderIdAtTime = result.orderId;
-              console.log(`✅ Đã cắt vị thế ${orderData.symbol} theo thời gian: OrderId ${result.orderId}`);
-            } else {
-              orderData.positionClosedAtTime = true;
-              orderData.positionClosedAtTimeAt = new Date().toISOString();
-              orderData.positionCloseAtTimeError = result.error || result.message;
-              console.log(`ℹ️  ${result.message || result.error}`);
-            }
-          }, closeDelay);
+        // Kiểm tra xem thời gian cắt có trong tương lai không
+        if (closeTimeMs > actualExecutionTime.getTime()) {
+          // Sử dụng interval động: 100ms khi còn xa, 10ms khi gần (< 1 giây)
+          let closeCheckInterval = null;
+          let closeCurrentInterval = 100;
           
+          const scheduleCloseCheck = async () => {
+            const currentTime = new Date().getTime();
+            const remaining = closeTimeMs - currentTime;
+            
+            // Nếu còn > 1 giây, dùng interval 100ms
+            // Nếu còn < 1 giây, dùng interval 10ms để tăng độ chính xác
+            const newInterval = remaining > 1000 ? 100 : 10;
+            
+            // Nếu interval thay đổi, clear và tạo lại
+            if (newInterval !== closeCurrentInterval && closeCheckInterval) {
+              clearInterval(closeCheckInterval);
+              closeCurrentInterval = newInterval;
+              closeCheckInterval = setInterval(scheduleCloseCheck, closeCurrentInterval);
+              return;
+            }
+            
+            // Chờ đến đúng hoặc sau thời gian cắt
+            if (remaining > 0) {
+              return;
+            }
+            
+            // Đã đến hoặc quá thời gian cắt => thực thi ngay
+            if (closeCheckInterval) {
+              clearInterval(closeCheckInterval);
+            }
+            
+            try {
+              const result = await closePosition(orderData.symbol, orderData);
+              const actualCloseTime = new Date();
+              if (result.success) {
+                orderData.positionClosedAtTime = true;
+                orderData.positionClosedAtTimeAt = actualCloseTime.toISOString();
+                orderData.closeOrderIdAtTime = result.orderId;
+                const closeDelayMs = actualCloseTime.getTime() - closeTimeMs;
+                console.log(`✅ Đã cắt vị thế ${orderData.symbol} theo thời gian: OrderId ${result.orderId}`);
+                console.log(`   Thời gian dự kiến: ${closeTimeDate.toISOString()}`);
+                console.log(`   Thời gian thực tế: ${actualCloseTime.toISOString()}`);
+                console.log(`   Độ lệch: ${closeDelayMs}ms`);
+              } else {
+                orderData.positionClosedAtTime = true;
+                orderData.positionClosedAtTimeAt = actualCloseTime.toISOString();
+                orderData.positionCloseAtTimeError = result.error || result.message;
+                console.log(`ℹ️  ${result.message || result.error}`);
+              }
+            } catch (error) {
+              orderData.positionClosedAtTime = true;
+              orderData.positionClosedAtTimeAt = new Date().toISOString();
+              orderData.positionCloseAtTimeError = error.message;
+              console.error(`❌ Lỗi khi cắt vị thế ${orderData.symbol}:`, error);
+            }
+          };
+          
+          // Bắt đầu với interval 100ms
+          closeCheckInterval = setInterval(scheduleCloseCheck, closeCurrentInterval);
+          
+          // Fallback timeout để cleanup nếu có vấn đề
+          const closeTimeoutId = setTimeout(() => {
+            if (closeCheckInterval) {
+              clearInterval(closeCheckInterval);
+            }
+          }, (closeTimeMs - actualExecutionTime.getTime()) + 2000);
+          
+          orderData.closePositionCheckInterval = closeCheckInterval;
           orderData.closePositionTimeoutId = closeTimeoutId;
           console.log(`⏰ Đã lên lịch cắt vị thế ${orderData.symbol} vào ${closeTimeDate.toISOString()}`);
         } else {
@@ -321,11 +423,16 @@ async function createScheduledOrder(orderData) {
       orderData.executedAt = new Date().toISOString();
       console.error(`❌ Lỗi khi thực thi lệnh ${orderData.id}:`, error);
     }
-  }, 100);
+  };
+  
+  // Bắt đầu với interval 100ms
+  checkInterval = setInterval(scheduleCheck, currentInterval);
   
   // Fallback timeout
   const timeoutId = setTimeout(() => {
-    clearInterval(checkInterval);
+    if (checkInterval) {
+      clearInterval(checkInterval);
+    }
   }, delay + 2000);
 
   orderData.timeoutId = timeoutId;

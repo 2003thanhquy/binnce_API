@@ -764,10 +764,87 @@ function toggleScheduleField() {
         if (typeof startCountdown === 'function') {
             startCountdown();
         }
+        
+        // Setup test mode handler
+        const testModeCheckbox = document.getElementById('testMode');
+        if (testModeCheckbox) {
+            testModeCheckbox.addEventListener('change', handleTestModeChange);
+            // Apply test mode if already checked
+            if (testModeCheckbox.checked) {
+                handleTestModeChange();
+            }
+        }
     } else {
         scheduleFields.style.display = 'none';
         if (window.countdownInterval) {
             clearInterval(window.countdownInterval);
+        }
+    }
+}
+
+// Handle Test Mode Change
+function handleTestModeChange() {
+    const testMode = document.getElementById('testMode');
+    const scheduleDate = document.getElementById('scheduleDate');
+    const scheduleHour = document.getElementById('scheduleHour');
+    const scheduleMinute = document.getElementById('scheduleMinute');
+    const scheduleSecond = document.getElementById('scheduleSecond');
+    const closePositionDate = document.getElementById('closePositionDate');
+    const closePositionHour = document.getElementById('closePositionHour');
+    const closePositionMinute = document.getElementById('closePositionMinute');
+    const closePositionSecond = document.getElementById('closePositionSecond');
+    
+    if (!testMode || !scheduleDate || !scheduleHour || !scheduleMinute || !scheduleSecond) {
+        return;
+    }
+    
+    const now = new Date();
+    
+    if (testMode.checked) {
+        // Test mode: Set time to 5 seconds from now
+        const testTime = new Date(now.getTime() + 5 * 1000); // 5 seconds
+        
+        scheduleDate.value = formatDate(testTime);
+        scheduleHour.value = testTime.getHours();
+        scheduleMinute.value = testTime.getMinutes();
+        scheduleSecond.value = testTime.getSeconds();
+        
+        // Auto set close position time to 10 seconds after (if enabled)
+        const closePositionAtTime = document.getElementById('closePositionAtTime');
+        if (closePositionAtTime && closePositionAtTime.checked && closePositionDate) {
+            const closeTime = new Date(testTime.getTime() + 10 * 1000); // 10 seconds after
+            closePositionDate.value = formatDate(closeTime);
+            closePositionHour.value = closeTime.getHours();
+            closePositionMinute.value = closeTime.getMinutes();
+            closePositionSecond.value = closeTime.getSeconds();
+        }
+        
+        // Restart countdown
+        if (typeof startCountdown === 'function') {
+            startCountdown();
+        }
+    } else {
+        // Normal mode: Set time to 10 minutes from now
+        const normalTime = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes
+        
+        scheduleDate.value = formatDate(normalTime);
+        scheduleHour.value = normalTime.getHours();
+        scheduleMinute.value = normalTime.getMinutes();
+        scheduleSecond.value = normalTime.getSeconds();
+        
+        // Auto set close position time to 2 minutes after (if enabled)
+        const closePositionAtTime = document.getElementById('closePositionAtTime');
+        if (closePositionAtTime && closePositionAtTime.checked && closePositionDate) {
+            const closeTime = new Date(normalTime.getTime() + 2 * 60 * 1000); // 2 minutes after
+            closePositionDate.value = formatDate(closeTime);
+            closePositionHour.value = closeTime.getHours();
+            closePositionMinute.value = closeTime.getMinutes();
+            closePositionSecond.value = closeTime.getSeconds();
+        }
+        
+        // Restart countdown
+        if (typeof startCountdown === 'function') {
+            startCountdown();
         }
     }
 }
@@ -2414,4 +2491,167 @@ async function loadAccountBalance() {
 window.cancelOrder = cancelOrder;
 window.cancelOpenOrder = cancelOpenOrder;
 window.closePosition = closePosition;
+
+// ==================== TEST MODE FUNCTIONS ====================
+
+// Load scheduled orders for testing
+async function loadTestOrders() {
+    const listContainer = document.getElementById('testOrdersList');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Đang tải danh sách lệnh...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/scheduled-orders`);
+        const orders = await response.json();
+        
+        // Filter only scheduled orders (not executed, cancelled, or failed)
+        const scheduledOrders = orders.filter(order => order.status === 'scheduled');
+        
+        if (scheduledOrders.length === 0) {
+            listContainer.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <p style="font-size: 18px; margin-bottom: 10px;">📭 Không có lệnh nào đang chờ thực thi</p>
+                    <p>Vui lòng tạo lệnh mới ở tab "Đặt Lệnh" với tùy chọn "Đặt lệnh theo thời gian"</p>
+                </div>
+            `;
+            return;
+        }
+        
+        listContainer.innerHTML = scheduledOrders.map(order => {
+            const scheduledTime = new Date(order.scheduledTime);
+            const formattedTime = scheduledTime.toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const sideColor = order.side === 'BUY' ? '#28a745' : '#dc3545';
+            const typeText = order.type === 'MARKET' ? 'MARKET' : `LIMIT (${formatNumber(order.price)} USDT)`;
+            
+            return `
+                <div class="order-card" style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #fff;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div>
+                            <h3 style="margin: 0; color: ${sideColor};">
+                                ${order.symbol} - ${order.side} ${typeText}
+                            </h3>
+                            <p style="margin: 5px 0; color: #666; font-size: 14px;">
+                                Số lượng: ${formatNumber(order.quantity)} hợp đồng | 
+                                Đòn bẩy: ${order.leverage}x | 
+                                Margin: ${order.marginType === 'CROSSED' ? 'Cross' : 'Isolated'}
+                            </p>
+                            <p style="margin: 5px 0; color: #666; font-size: 13px;">
+                                ⏰ Thời gian dự kiến: ${formattedTime}
+                            </p>
+                            ${order.closePositionAtTime && order.closePositionTime ? `
+                                <p style="margin: 5px 0; color: #dc3545; font-size: 13px;">
+                                    🔴 Cắt vị thế: ${new Date(order.closePositionTime).toLocaleString('vi-VN')}
+                                </p>
+                            ` : ''}
+                        </div>
+                        <button 
+                            class="btn-primary" 
+                            onclick="testScheduledOrder('${order.id}')"
+                            style="padding: 8px 16px; font-size: 14px;"
+                        >
+                            🧪 Test Lệnh Này
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Lỗi khi tải lệnh:', error);
+        listContainer.innerHTML = `
+            <p style="text-align: center; color: #e74c3c; padding: 20px;">
+                ❌ Lỗi khi tải danh sách lệnh: ${error.message}
+            </p>
+        `;
+        showNotification('Lỗi khi tải danh sách lệnh: ' + error.message, 'error');
+    }
+}
+
+// Test a scheduled order
+async function testScheduledOrder(orderId) {
+    const testDelayInput = document.getElementById('testDelay');
+    const testClosePositionCheckbox = document.getElementById('testClosePosition');
+    
+    if (!testDelayInput) {
+        showNotification('❌ Không tìm thấy input thời gian delay', 'error');
+        return;
+    }
+    
+    const testDelay = parseInt(testDelayInput.value) || 5;
+    const testClosePosition = testClosePositionCheckbox ? testClosePositionCheckbox.checked : false;
+    
+    if (testDelay < 1 || testDelay > 60) {
+        showNotification('❌ Thời gian delay phải từ 1 đến 60 giây', 'error');
+        return;
+    }
+    
+    try {
+        showNotification(`🧪 Đang setup test cho lệnh ${orderId}...`, 'info');
+        
+        const response = await fetch(`${API_BASE}/api/test-scheduled-order/${orderId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                testDelay: testDelay,
+                testClosePosition: testClosePosition
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showNotification(`✅ ${result.message}`, 'success');
+            
+            // Display test results
+            const testResults = document.getElementById('testResults');
+            const testResultsContent = document.getElementById('testResultsContent');
+            
+            if (testResults && testResultsContent) {
+                testResults.style.display = 'block';
+                testResultsContent.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="color: #28a745; margin-bottom: 10px;">✅ Test đã được khởi động</h4>
+                        <p><strong>Order ID:</strong> ${orderId}</p>
+                        <p><strong>Thời gian delay:</strong> ${testDelay} giây</p>
+                        <p><strong>Thời gian thực thi dự kiến:</strong> ${new Date(result.scheduledTime).toLocaleString('vi-VN')}</p>
+                        ${testClosePosition ? '<p><strong>Test cắt vị thế:</strong> Có (sau 10 giây từ khi thực thi)</p>' : ''}
+                    </div>
+                    <div style="background: #fff; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                        <p style="color: #666; font-size: 13px; margin: 0;">
+                            💡 <strong>Lưu ý:</strong> Lệnh sẽ được thực thi sau ${testDelay} giây. 
+                            Vui lòng theo dõi tab "Lệnh Đã Lên Lịch" để xem kết quả.
+                        </p>
+                    </div>
+                `;
+            }
+            
+            // Reload orders list after 1 second
+            setTimeout(() => {
+                loadTestOrders();
+            }, 1000);
+        } else {
+            showNotification('❌ Lỗi: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Lỗi khi test lệnh:', error);
+        showNotification('❌ Lỗi: ' + error.message, 'error');
+    }
+}
+
+// Make test functions available globally
+window.loadTestOrders = loadTestOrders;
+window.testScheduledOrder = testScheduledOrder;
 

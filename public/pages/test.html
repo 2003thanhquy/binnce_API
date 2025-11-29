@@ -1,0 +1,40 @@
+<div class="card">
+    <h2>🧪 Test Mode - Giả Lập Thời Gian Chạy Lệnh</h2>
+    <p style="color: #666; margin-bottom: 20px;">
+        Trang này cho phép bạn test các lệnh đã lên lịch với thời gian giả lập ngắn (5-30 giây) để kiểm tra logic thực thi.
+    </p>
+
+    <div class="form-group">
+        <label for="testDelay">⏱️ Thời gian delay test (giây):</label>
+        <input type="number" id="testDelay" name="testDelay" min="1" max="60" value="5" required>
+        <small>Lệnh sẽ được thực thi sau số giây này (tối thiểu 1 giây, tối đa 60 giây)</small>
+    </div>
+
+    <div class="form-group">
+        <label>
+            <input type="checkbox" id="testClosePosition" name="testClosePosition">
+            🔴 Test cắt vị thế theo thời gian
+        </label>
+        <small style="display: block; margin-top: 5px; color: #666;">
+            Nếu bật, sẽ test cả tính năng cắt vị thế (thời gian cắt = thời gian thực thi + 10 giây)
+        </small>
+    </div>
+
+    <div class="form-group">
+        <button type="button" id="loadScheduledOrders" class="btn-primary">🔄 Tải Danh Sách Lệnh Đã Lên Lịch</button>
+    </div>
+
+    <div id="testOrdersList" style="margin-top: 20px;">
+        <p style="text-align: center; color: #999; padding: 20px;">
+            Nhấn nút "Tải Danh Sách Lệnh Đã Lên Lịch" để xem các lệnh có thể test
+        </p>
+    </div>
+
+    <div id="testResults" style="margin-top: 30px; display: none;">
+        <h3>📊 Kết Quả Test</h3>
+        <div id="testResultsContent" style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 10px;">
+            <!-- Test results will be displayed here -->
+        </div>
+    </div>
+</div>
+

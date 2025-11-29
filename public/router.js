@@ -310,6 +310,17 @@ function initializePage(pageName) {
             if (typeof loadAccount === 'function') loadAccount();
             if (typeof loadAccountBalance === 'function') loadAccountBalance();
             break;
+        case 'test':
+            // Setup test page
+            const loadScheduledOrdersBtn = document.getElementById('loadScheduledOrders');
+            if (loadScheduledOrdersBtn && typeof loadTestOrders === 'function') {
+                loadScheduledOrdersBtn.addEventListener('click', loadTestOrders);
+            }
+            // Auto load on page load
+            if (typeof loadTestOrders === 'function') {
+                setTimeout(() => loadTestOrders(), 500);
+            }
+            break;
     }
 }
 
