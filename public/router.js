@@ -106,11 +106,12 @@ function initializePage(pageName) {
             }, 10 * 60 * 1000);
             break;
         case 'scheduled':
-            if (typeof refreshScheduledOrders === 'function') refreshScheduledOrders();
-            // Auto refresh every 5 seconds
+            // Lần đầu vào tab: hiển thị loading + dữ liệu
+            if (typeof refreshScheduledOrders === 'function') refreshScheduledOrders(true);
+            // Auto refresh mỗi 5 giây nhưng KHÔNG hiển thị loading để tránh giật màn hình
             setInterval(() => {
                 if (document.querySelector('.tab-btn[data-page="scheduled"]')?.classList.contains('active')) {
-                    refreshScheduledOrders();
+                    if (typeof refreshScheduledOrders === 'function') refreshScheduledOrders(false);
                 }
             }, 5000);
             break;

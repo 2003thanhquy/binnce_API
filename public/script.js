@@ -339,42 +339,82 @@ async function loadSymbols() {
         
         const symbolSelect = document.getElementById('symbol');
         const historySymbolSelect = document.getElementById('historySymbol');
+        const positionHistorySymbolSelect = document.getElementById('positionHistorySymbol');
+        const fundingIncomeSymbolSelect = document.getElementById('fundingIncomeSymbol');
+        const fundingRateSymbolSelect = document.getElementById('fundingRateSymbol');
         
-        symbolSelect.innerHTML = '<option value="">Chọn cặp giao dịch</option>';
-        historySymbolSelect.innerHTML = '<option value="">Tất cả</option>';
+        // Nếu không có bất kỳ select nào trên trang hiện tại thì chỉ trả dữ liệu ra cho router dùng, không thao tác DOM
+        if (!symbolSelect && !historySymbolSelect && !positionHistorySymbolSelect && !fundingIncomeSymbolSelect && !fundingRateSymbolSelect) {
+            return data;
+        }
+        
+        if (symbolSelect) {
+            symbolSelect.innerHTML = '<option value="">Chọn cặp giao dịch</option>';
+        }
+        if (historySymbolSelect) {
+            historySymbolSelect.innerHTML = '<option value="">Tất cả</option>';
+        }
+        if (positionHistorySymbolSelect && !positionHistorySymbolSelect.dataset.initialized) {
+            positionHistorySymbolSelect.innerHTML = '<option value="">Tất cả</option>';
+        }
+        if (fundingIncomeSymbolSelect && !fundingIncomeSymbolSelect.dataset.initialized) {
+            fundingIncomeSymbolSelect.innerHTML = '<option value="">Tất cả</option>';
+        }
+        if (fundingRateSymbolSelect && !fundingRateSymbolSelect.dataset.initialized) {
+            fundingRateSymbolSelect.innerHTML = '<option value="">Tất cả</option>';
+        }
         
         data.forEach(symbol => {
-            const option = document.createElement('option');
-            option.value = symbol.symbol;
-            option.textContent = `${symbol.symbol} (${symbol.baseAsset}/${symbol.quoteAsset})`;
-            symbolSelect.appendChild(option);
+            // Option cho form đặt lệnh
+            if (symbolSelect) {
+                const option = document.createElement('option');
+                option.value = symbol.symbol;
+                option.textContent = `${symbol.symbol} (${symbol.baseAsset}/${symbol.quoteAsset})`;
+                symbolSelect.appendChild(option);
+            }
             
-            const historyOption = option.cloneNode(true);
-            historySymbolSelect.appendChild(historyOption);
+            // Option cho lịch sử lệnh
+            if (historySymbolSelect) {
+                const historyOption = document.createElement('option');
+                historyOption.value = symbol.symbol;
+                historyOption.textContent = `${symbol.symbol} (${symbol.baseAsset}/${symbol.quoteAsset})`;
+                historySymbolSelect.appendChild(historyOption);
+            }
             
             // Add to position history symbol select
-            const positionHistorySymbolSelect = document.getElementById('positionHistorySymbol');
             if (positionHistorySymbolSelect) {
-                const positionHistoryOption = option.cloneNode(true);
+                const positionHistoryOption = document.createElement('option');
+                positionHistoryOption.value = symbol.symbol;
+                positionHistoryOption.textContent = `${symbol.symbol} (${symbol.baseAsset}/${symbol.quoteAsset})`;
                 positionHistorySymbolSelect.appendChild(positionHistoryOption);
             }
             
             // Add to funding income symbol select
-            const fundingIncomeSymbolSelect = document.getElementById('fundingIncomeSymbol');
             if (fundingIncomeSymbolSelect) {
-                const fundingIncomeOption = option.cloneNode(true);
+                const fundingIncomeOption = document.createElement('option');
+                fundingIncomeOption.value = symbol.symbol;
+                fundingIncomeOption.textContent = `${symbol.symbol} (${symbol.baseAsset}/${symbol.quoteAsset})`;
                 fundingIncomeSymbolSelect.appendChild(fundingIncomeOption);
             }
             
             // Add to funding rate symbol select
-            const fundingRateSymbolSelect = document.getElementById('fundingRateSymbol');
             if (fundingRateSymbolSelect) {
-                const fundingRateOption = option.cloneNode(true);
+                const fundingRateOption = document.createElement('option');
+                fundingRateOption.value = symbol.symbol;
+                fundingRateOption.textContent = `${symbol.symbol} (${symbol.baseAsset}/${symbol.quoteAsset})`;
                 fundingRateSymbolSelect.appendChild(fundingRateOption);
             }
         });
+        
+        // Đánh dấu đã khởi tạo để không reset options nhiều lần khi loadSymbols được gọi lại
+        if (positionHistorySymbolSelect) positionHistorySymbolSelect.dataset.initialized = 'true';
+        if (fundingIncomeSymbolSelect) fundingIncomeSymbolSelect.dataset.initialized = 'true';
+        if (fundingRateSymbolSelect) fundingRateSymbolSelect.dataset.initialized = 'true';
+        
+        return data;
     } catch (error) {
         showNotification('Lỗi khi tải danh sách symbols: ' + error.message, 'error');
+        throw error;
     }
 }
 
@@ -522,10 +562,17 @@ function handleQuantityTypeChange() {
 
 // Update quantity help text
 function updateQuantityHelp() {
-    const quantityType = document.getElementById('quantityType').value;
+    const quantityTypeSelect = document.getElementById('quantityType');
     const quantityLabel = document.getElementById('quantityLabel');
     const quantityHelp = document.getElementById('quantityHelp');
     const quantityInput = document.getElementById('quantity');
+    
+    // Nếu các phần tử này không tồn tại (ví dụ đang ở tab khác), thì bỏ qua
+    if (!quantityTypeSelect || !quantityLabel || !quantityHelp || !quantityInput) {
+        return;
+    }
+    
+    const quantityType = quantityTypeSelect.value;
     
     if (quantityType === 'usdt') {
         quantityLabel.textContent = '💰 Số tiền (USDT):';
@@ -570,8 +617,13 @@ async function loadPrice(symbol) {
 
 // Toggle Price Field
 function togglePriceField() {
-    const type = document.getElementById('type').value;
+    const typeSelect = document.getElementById('type');
     const priceGroup = document.getElementById('priceGroup');
+    
+    // Nếu không ở trang Đặt Lệnh (không có element), thoát sớm tránh lỗi
+    if (!typeSelect || !priceGroup) return;
+    
+    const type = typeSelect.value;
     if (type === 'LIMIT') {
         priceGroup.style.display = 'block';
         if (selectedSymbol) {
@@ -973,16 +1025,20 @@ async function handleOrderSubmit(e) {
 }
 
 // Refresh Scheduled Orders
-async function refreshScheduledOrders() {
+// showLoading: có hiển thị spinner hay không (mặc định: true, auto-refresh nên để false để tránh giật màn hình)
+async function refreshScheduledOrders(showLoading = true) {
     const listContainer = document.getElementById('scheduledOrdersList');
+    if (!listContainer) return;
     
-    // Show loading
-    listContainer.innerHTML = `
-        <div class="loading-container">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">Đang tải lệnh đã lên lịch...</p>
-        </div>
-    `;
+    // Chỉ hiển thị loading khi gọi thủ công (không phải auto refresh)
+    if (showLoading) {
+        listContainer.innerHTML = `
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Đang tải lệnh đã lên lịch...</p>
+            </div>
+        `;
+    }
     
     try {
         const response = await fetch(`${API_BASE}/api/scheduled-orders`);

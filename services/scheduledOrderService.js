@@ -162,12 +162,12 @@ async function createScheduledOrder(orderData) {
     const targetTimeMs = targetTime.getTime();
     const remaining = targetTimeMs - currentTime;
     
-    // Nếu còn hơn 1 giây, chờ tiếp
-    if (remaining > 1000) {
+    // Chờ đến đúng hoặc sau thời gian target (không gửi sớm hơn thời gian đặt)
+    if (remaining > 0) {
       return;
     }
     
-    // Nếu đã đến hoặc quá thời gian (trong vòng 1 giây), thực thi
+    // Đã đến hoặc quá thời gian target => thực thi
     clearInterval(checkInterval);
     
     try {
