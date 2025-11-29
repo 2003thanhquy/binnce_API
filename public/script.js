@@ -558,6 +558,7 @@ function handleClosePositionChange() {
 // Handle Quantity Type Change
 function handleQuantityTypeChange() {
     updateQuantityHelp();
+    updateOrderEstimate();
 }
 
 // Update quantity help text
@@ -594,6 +595,94 @@ function updateQuantityHelp() {
             <strong>Lưu ý:</strong> Bạn cần tự tính số tiền = Số hợp đồng × Giá hiện tại / Đòn bẩy
         `;
         quantityInput.step = '0.001';
+    }
+}
+
+// Estimate order notional and required margin
+async function updateOrderEstimate() {
+    const estimateDiv = document.getElementById('orderEstimate');
+    if (!estimateDiv) return;
+
+    const symbolSelect = document.getElementById('symbol');
+    const quantityInput = document.getElementById('quantity');
+    const quantityTypeSelect = document.getElementById('quantityType');
+    const leverageInput = document.getElementById('leverage');
+    const typeSelect = document.getElementById('type');
+    const priceInput = document.getElementById('price');
+
+    if (!symbolSelect || !quantityInput || !quantityTypeSelect || !leverageInput) {
+        estimateDiv.textContent = '';
+        return;
+    }
+
+    const symbol = symbolSelect.value;
+    const quantityRaw = parseFloat(quantityInput.value);
+    const leverage = parseInt(leverageInput.value) || 1;
+    const quantityType = (quantityTypeSelect.value || '').toLowerCase();
+
+    if (!symbol || !quantityRaw || quantityRaw <= 0 || leverage <= 0) {
+        estimateDiv.textContent = '';
+        return;
+    }
+
+    let price = null;
+    const orderType = typeSelect ? typeSelect.value : 'MARKET';
+
+    // Nếu là LIMIT và đã nhập giá, dùng giá đó
+    if (orderType === 'LIMIT') {
+        const p = parseFloat(priceInput?.value);
+        if (p && p > 0) {
+            price = p;
+        }
+    }
+
+    try {
+        // Nếu chưa có giá, lấy mark price từ API
+        if (!price) {
+            const resp = await fetch(`${API_BASE}/api/price/${symbol}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            price = parseFloat(data.price);
+        }
+
+        if (!price || !isFinite(price) || price <= 0) {
+            estimateDiv.textContent = 'Không lấy được giá hiện tại để ước tính.';
+            return;
+        }
+
+        let notional = 0;
+        let margin = 0;
+
+        if (quantityType === 'usdt') {
+            // quantity = số USDT bạn nhập (vốn), notional = vốn × leverage
+            const usdtAmount = quantityRaw;
+            notional = usdtAmount * leverage;
+            margin = usdtAmount;
+        } else {
+            // quantity = số hợp đồng, notional = quantity × price, margin = notional / leverage
+            const contracts = quantityRaw;
+            notional = contracts * price;
+            margin = notional / leverage;
+        }
+
+        if (!isFinite(notional) || !isFinite(margin)) {
+            estimateDiv.textContent = '';
+            return;
+        }
+
+        const MIN_NOTIONAL = 5;
+        const warning = notional < MIN_NOTIONAL
+            ? `⚠️ Giá trị lệnh ≈ ${notional.toFixed(2)} USDT nhỏ hơn tối thiểu ${MIN_NOTIONAL} USDT của Binance.`
+            : '';
+
+        estimateDiv.innerHTML =
+            `Giá ước tính: <strong>${formatNumber(price)}</strong> USDT<br>` +
+            `Giá trị lệnh (notional) ≈ <strong>${notional.toFixed(4)} USDT</strong><br>` +
+            `Margin ước tính cần ≈ <strong>${margin.toFixed(4)} USDT</strong>` +
+            (warning ? `<br><span style="color:#dc3545;">${warning}</span>` : '');
+    } catch (err) {
+        console.error('Lỗi khi ước tính lệnh:', err);
+        estimateDiv.textContent = 'Không thể ước tính lệnh (lỗi lấy giá).';
     }
 }
 

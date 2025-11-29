@@ -64,26 +64,56 @@ function initializePage(pageName) {
                 if (typeof handleOrderSubmit === 'function') {
                     orderForm.addEventListener('submit', handleOrderSubmit);
                 }
-                if (typeof togglePriceField === 'function') {
-                    document.getElementById('type')?.addEventListener('change', togglePriceField);
+                const typeEl = document.getElementById('type');
+                if (typeEl && typeof togglePriceField === 'function') {
+                    typeEl.addEventListener('change', () => {
+                        togglePriceField();
+                        if (typeof updateOrderEstimate === 'function') updateOrderEstimate();
+                    });
                 }
-                if (typeof toggleScheduleField === 'function') {
-                    document.getElementById('scheduleOrder')?.addEventListener('change', toggleScheduleField);
+                const scheduleOrderEl = document.getElementById('scheduleOrder');
+                if (scheduleOrderEl && typeof toggleScheduleField === 'function') {
+                    scheduleOrderEl.addEventListener('change', toggleScheduleField);
                 }
-                if (typeof handleSymbolChange === 'function') {
-                    document.getElementById('symbol')?.addEventListener('change', handleSymbolChange);
+                const symbolEl = document.getElementById('symbol');
+                if (symbolEl && typeof handleSymbolChange === 'function') {
+                    symbolEl.addEventListener('change', (e) => {
+                        handleSymbolChange(e);
+                        if (typeof updateOrderEstimate === 'function') updateOrderEstimate();
+                    });
                 }
                 if (typeof loadSymbols === 'function') {
                     document.getElementById('refreshSymbols')?.addEventListener('click', loadSymbols);
                 }
-                if (typeof handleQuantityTypeChange === 'function') {
-                    document.getElementById('quantityType')?.addEventListener('change', handleQuantityTypeChange);
+                const quantityTypeEl = document.getElementById('quantityType');
+                if (quantityTypeEl && typeof handleQuantityTypeChange === 'function') {
+                    quantityTypeEl.addEventListener('change', () => {
+                        handleQuantityTypeChange();
+                        if (typeof updateOrderEstimate === 'function') updateOrderEstimate();
+                    });
                 }
-                if (typeof toggleClosePositionAtTimeField === 'function') {
-                    document.getElementById('closePositionAtTime')?.addEventListener('change', toggleClosePositionAtTimeField);
+                const closePositionAtTimeEl = document.getElementById('closePositionAtTime');
+                if (closePositionAtTimeEl && typeof toggleClosePositionAtTimeField === 'function') {
+                    closePositionAtTimeEl.addEventListener('change', toggleClosePositionAtTimeField);
                 }
                 if (typeof handleClosePositionChange === 'function') {
                     document.getElementById('closePosition')?.addEventListener('change', handleClosePositionChange);
+                }
+                const quantityEl = document.getElementById('quantity');
+                if (quantityEl && typeof updateOrderEstimate === 'function') {
+                    quantityEl.addEventListener('input', updateOrderEstimate);
+                }
+                const leverageEl = document.getElementById('leverage');
+                if (leverageEl && typeof updateOrderEstimate === 'function') {
+                    leverageEl.addEventListener('input', updateOrderEstimate);
+                }
+                const priceEl = document.getElementById('price');
+                if (priceEl && typeof updateOrderEstimate === 'function') {
+                    priceEl.addEventListener('input', updateOrderEstimate);
+                }
+                // Ước tính lần đầu nếu đủ dữ liệu
+                if (typeof updateOrderEstimate === 'function') {
+                    updateOrderEstimate();
                 }
             }
             break;

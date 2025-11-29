@@ -36,14 +36,14 @@
         <div class="form-group">
             <label for="quantityType">Loại số lượng:</label>
             <select id="quantityType" name="quantityType" required>
-                <option value="USDT">Số tiền (USDT)</option>
+                <option value="usdt">Số tiền (USDT)</option>
                 <option value="contracts">Số lượng hợp đồng</option>
             </select>
             <small id="quantityHelp">Nhập số tiền USDT bạn muốn sử dụng</small>
         </div>
 
         <div class="form-group">
-            <label for="quantity">Số lượng:</label>
+            <label for="quantity" id="quantityLabel">Số lượng:</label>
             <input type="number" id="quantity" name="quantity" step="0.00000001" required placeholder="Nhập số lượng...">
         </div>
 
@@ -51,6 +51,11 @@
             <label for="leverage">Đòn bẩy:</label>
             <input type="number" id="leverage" name="leverage" min="1" max="125" value="1" required>
             <small>Đòn bẩy sẽ được áp dụng cho symbol này</small>
+        </div>
+
+        <div class="form-group">
+            <label>Ước tính lệnh / Margin cần thiết:</label>
+            <div id="orderEstimate" style="font-size: 13px; color: #555;"></div>
         </div>
 
         <div class="form-group">
